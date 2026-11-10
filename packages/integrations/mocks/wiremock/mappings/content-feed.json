@@ -1,0 +1,69 @@
+{
+  "mappings": [
+    {
+      "name": "health",
+      "request": { "method": "GET", "urlPath": "/v1/health" },
+      "response": { "status": 200, "jsonBody": { "status": "ok" } }
+    },
+    {
+      "name": "auth required",
+      "priority": 1,
+      "request": {
+        "urlPathPattern": "/v1/.*",
+        "headers": { "Authorization": { "absent": true } }
+      },
+      "response": {
+        "status": 401,
+        "headers": { "Content-Type": "application/problem+json" },
+        "jsonBody": { "title": "Unauthorized", "status": 401 }
+      }
+    },
+    {
+      "name": "articles: first call is throttled once (exercises retry with backoff)",
+      "priority": 3,
+      "scenarioName": "throttle-once",
+      "requiredScenarioState": "Started",
+      "newScenarioState": "Recovered",
+      "request": { "method": "GET", "urlPath": "/v1/articles" },
+      "response": {
+        "status": 429,
+        "headers": { "Retry-After": "1", "Content-Type": "application/json" },
+        "jsonBody": { "error": "rate_limited" }
+      }
+    },
+    {
+      "name": "articles page 2",
+      "priority": 4,
+      "request": {
+        "method": "GET",
+        "urlPath": "/v1/articles",
+        "queryParameters": { "cursor": { "equalTo": "page-2" } }
+      },
+      "response": {
+        "status": 200,
+        "headers": { "Content-Type": "application/json" },
+        "bodyFileName": "articles-page-2.json"
+      }
+    },
+    {
+      "name": "articles page 1",
+      "priority": 5,
+      "request": { "method": "GET", "urlPath": "/v1/articles" },
+      "response": {
+        "status": 200,
+        "headers": { "Content-Type": "application/json" },
+        "bodyFileName": "articles-page-1.json"
+      }
+    },
+    {
+      "name": "create article",
+      "request": { "method": "POST", "urlPath": "/v1/articles" },
+      "response": {
+        "status": 201,
+        "headers": { "Content-Type": "application/json" },
+        "body": "{\"id\":\"ext-{{randomValue length=10 type='ALPHANUMERIC'}}\",\"title\":{{jsonPath request.body '$.title'}}}",
+        "transformers": ["response-template"]
+      }
+    }
+  ]
+}

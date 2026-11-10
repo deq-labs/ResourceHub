@@ -1,0 +1,17 @@
+node_modules
+dist
+coverage
+.turbo
+*.log
+.env
+.env.*
+!.env.example
+*.tsbuildinfo
+.DS_Store
+playwright-report
+test-results
+.terraform
+*.tfstate
+*.tfstate.*
+*.tfplan
+.secrets.local.json

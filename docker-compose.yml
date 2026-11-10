@@ -1,0 +1,71 @@
+# Local infrastructure for ResourceHub. `pnpm infra:up` starts everything and waits for health.
+# All credentials below are local-dev only. In Azure they come from Key Vault.
+name: resourcehub
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - '55432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./packages/db/sql/docker-init.sh:/docker-entrypoint-initdb.d/00-init.sh:ro
+      - ./packages/db/sql:/resourcehub-sql:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d resourcehub']
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  # SOAP mock of a legacy partner system, built from packages/integrations/wsdl/partner-docs.wsdl
+  soap-mock:
+    build:
+      context: ./packages/integrations
+      dockerfile: mocks/soap-server/Dockerfile
+    ports:
+      - '8088:8088'
+
+  # REST mock (WireMock) of the partner content feed API
+  rest-mock:
+    image: wiremock/wiremock:3.13.1
+    command: ['--global-response-templating', '--disable-banner']
+    ports:
+      - '8089:8080'
+    volumes:
+      - ./packages/integrations/mocks/wiremock:/home/wiremock:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -fs http://localhost:8080/__admin/health || exit 1']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # Azure Blob Storage emulator: per-tenant file prefixes + SAS URLs work exactly like Azure
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite:3.35.0
+    command: ['azurite-blob', '--blobHost', '0.0.0.0', '--loose', '--skipApiVersionCheck']
+    ports:
+      - '10000:10000'
+
+  # Catches outbound email (invitations). UI at http://localhost:8025
+  mailpit:
+    image: axllent/mailpit:v1.27
+    ports:
+      - '1025:1025'
+      - '8025:8025'
+
+volumes:
+  pgdata:
