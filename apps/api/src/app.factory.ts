@@ -75,6 +75,19 @@ export async function createApp(config: AppConfig): Promise<NestFastifyApplicati
   // Decorated with null up front so Fastify keeps a stable request shape; set in onRequest.
   fastify.decorateRequest('site', null as never);
   fastify.addHook('onRequest', async (req, reply) => {
+    // Origin lock-down: in Azure only Front Door may reach the API (it stamps X-Azure-FDID).
+    if (
+      config.FRONT_DOOR_ID &&
+      req.headers['x-azure-fdid'] !== config.FRONT_DOOR_ID &&
+      !req.url.startsWith('/api/v1/health')
+    ) {
+      return reply.code(403).header('content-type', 'application/problem+json').send({
+        type: 'https://resourcehub.dev/problems/forbidden',
+        title: 'Forbidden',
+        status: 403,
+        detail: 'Requests must come through the edge.',
+      });
+    }
     req.site = await resolver.resolve(req.host);
     void reply.header('x-request-id', req.id);
   });

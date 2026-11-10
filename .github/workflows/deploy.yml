@@ -1,0 +1,43 @@
+name: Deploy
+
+# Dev on every merge to main; prod on a v* tag (manual approval via the `prod` environment).
+# Dormant until the Azure bootstrap has run and AZURE_CLIENT_ID is set as a repository variable.
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.check.outputs.enabled }}
+    steps:
+      - id: check
+        run: |
+          if [ -n "${{ vars.AZURE_CLIENT_ID }}" ]; then echo "enabled=true" >> "$GITHUB_OUTPUT";
+          else echo "enabled=false" >> "$GITHUB_OUTPUT"; echo "::notice::Azure deploy is not configured yet (set AZURE_CLIENT_ID etc. from infra/terraform/bootstrap). Skipping."; fi
+
+  dev:
+    needs: gate
+    if: needs.gate.outputs.enabled == 'true' && github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/_deploy.yml
+    with:
+      environment: dev
+      image_tag: ${{ github.sha }}
+
+  prod:
+    needs: gate
+    if: needs.gate.outputs.enabled == 'true' && startsWith(github.ref, 'refs/tags/v')
+    uses: ./.github/workflows/_deploy.yml
+    with:
+      environment: prod
+      # The tag points at a commit main already deployed to dev: promote those exact images.
+      image_tag: ${{ github.sha }}
+      promote_from_acr: ${{ vars.DEV_ACR_NAME }}

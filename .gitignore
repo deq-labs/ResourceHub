@@ -16,3 +16,5 @@ test-results
 *.tfplan
 .secrets.local.json
 .api-smoke.log
+.terraform.lock.hcl.bak
+**/.terraform/
