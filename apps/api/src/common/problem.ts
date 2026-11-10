@@ -9,6 +9,7 @@ import {
 import type { ProblemDetails } from '@resourcehub/contracts';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { ZodError } from 'zod';
+import { trace } from '@opentelemetry/api';
 
 const TYPE_BASE = 'https://resourcehub.dev/problems/';
 
@@ -65,7 +66,8 @@ export class ProblemDetailsFilter implements ExceptionFilter {
     const req = ctx.getRequest<FastifyRequest>();
     const reply = ctx.getResponse<FastifyReply>();
     const problem = this.toProblem(exception);
-    problem.traceId = req.id;
+    // The OpenTelemetry trace id when tracing is on (searchable in App Insights), else the request id.
+    problem.traceId = trace.getActiveSpan()?.spanContext().traceId ?? req.id;
     if (problem.status >= 500) {
       this.logger.error({ err: exception, traceId: req.id }, 'Unhandled error');
     }

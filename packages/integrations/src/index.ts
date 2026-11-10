@@ -30,3 +30,4 @@ export interface EmailJob {
   text: string;
   html: string;
 }
+export * from './resilience/egress.js';

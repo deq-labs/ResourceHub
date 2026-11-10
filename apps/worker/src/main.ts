@@ -3,11 +3,13 @@ import { createDatabase, eq, schema } from '@resourcehub/db';
 import { QUEUES, SecretResolver, type EmailJob, type SyncJob } from '@resourcehub/integrations';
 import { Queue, UnrecoverableError, Worker } from 'bullmq';
 import { Redis } from 'ioredis';
+import { SpanStatusCode, trace } from '@opentelemetry/api';
 import nodemailer from 'nodemailer';
 import { loadWorkerConfig, redisConnection } from './config.js';
 import { processSyncJob, RedisBreakerStore } from './sync.js';
 
 const config = loadWorkerConfig();
+const tracer = trace.getTracer('resourcehub-worker');
 const log = (msg: string, extra: Record<string, unknown> = {}) => {
   console.log(
     JSON.stringify({ level: 'info', time: new Date().toISOString(), svc: 'worker', msg, ...extra }),
@@ -41,15 +43,37 @@ const syncWorker = new Worker<SyncJob>(
   QUEUES.sync,
   async (job) => {
     const maxAttempts = job.opts.attempts ?? 1;
-    const outcome = await processSyncJob(job.data, job.attemptsMade + 1, maxAttempts, {
-      db,
-      secrets,
-      breakerStore: new RedisBreakerStore(redis),
-      breaker: {
-        failureThreshold: config.BREAKER_FAILURE_THRESHOLD,
-        openMs: config.BREAKER_OPEN_SECONDS * 1000,
-      },
-      log,
+    // One span per run attempt, tagged with tenant + integration, parent of the HTTP/SOAP and
+    // Postgres spans the auto-instrumentation records inside it.
+    const outcome = await tracer.startActiveSpan(`integration.${job.data.type}`, async (span) => {
+      span.setAttributes({
+        'tenant.id': job.data.tenantId,
+        'integration.id': job.data.integrationId,
+        'integration.run_id': job.data.runId || 'scheduled',
+        'integration.trigger': job.data.trigger,
+        'messaging.system': 'bullmq',
+        'job.attempt': job.attemptsMade + 1,
+      });
+      try {
+        const result = await processSyncJob(job.data, job.attemptsMade + 1, maxAttempts, {
+          db,
+          secrets,
+          breakerStore: new RedisBreakerStore(redis),
+          breaker: {
+            failureThreshold: config.BREAKER_FAILURE_THRESHOLD,
+            openMs: config.BREAKER_OPEN_SECONDS * 1000,
+          },
+          log,
+        });
+        span.setAttribute('integration.outcome', result.status);
+        if (result.error) {
+          span.setAttribute('integration.error_code', result.error.code);
+          span.setStatus({ code: SpanStatusCode.ERROR, message: result.error.message });
+        }
+        return result;
+      } finally {
+        span.end();
+      }
     });
     if (outcome.status === 'retry') throw outcome.error ?? new Error('retry'); // BullMQ backs off and retries
     if (outcome.status === 'failed')

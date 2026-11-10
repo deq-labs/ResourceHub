@@ -31,4 +31,4 @@ COPY --from=build --chown=node:node /out ./
 USER node
 EXPOSE 3000
 HEALTHCHECK --interval=15s --timeout=3s --retries=5 CMD wget -qO- http://127.0.0.1:3000/api/v1/health || exit 1
-CMD ["node", "--enable-source-maps", "dist/main.js"]
+CMD ["node", "--enable-source-maps", "--import", "./dist/instrumentation.js", "dist/main.js"]

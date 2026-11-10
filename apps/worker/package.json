@@ -5,11 +5,11 @@
   "type": "module",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "dev": "concurrently -k -n tsc,node \"tsc -p tsconfig.build.json --watch --preserveWatchOutput\" \"node --watch --enable-source-maps --env-file-if-exists=../../.env dist/main.js\"",
+    "dev": "concurrently -k -n tsc,node \"tsc -p tsconfig.build.json --watch --preserveWatchOutput\" \"node --watch --enable-source-maps --import ./dist/instrumentation.js --env-file-if-exists=../../.env dist/main.js\"",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "vitest run --passWithNoTests --project unit",
-    "start": "node --enable-source-maps dist/main.js",
+    "start": "node --enable-source-maps --import ./dist/instrumentation.js dist/main.js",
     "test:integration": "vitest run --project integration"
   },
   "devDependencies": {
@@ -26,6 +26,8 @@
     "vitest": "^3.2.7"
   },
   "dependencies": {
+    "@azure/monitor-opentelemetry": "^1.21.0",
+    "@opentelemetry/api": "^1.10.0",
     "@resourcehub/db": "workspace:*",
     "@resourcehub/integrations": "workspace:*",
     "bullmq": "^5.81.5",
