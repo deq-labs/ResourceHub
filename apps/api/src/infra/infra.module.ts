@@ -1,4 +1,4 @@
-import { Global, Inject, Module, type OnApplicationShutdown } from '@nestjs/common';
+import { Global, Inject, Logger, Module, type OnApplicationShutdown } from '@nestjs/common';
 import { Redis } from 'ioredis';
 import { APP_CONFIG, REDIS } from '../tokens.js';
 import type { AppConfig } from '../config.js';
@@ -6,6 +6,8 @@ import { DbService } from './db.service.js';
 import { TenantScopedCache } from './tenant-cache.js';
 import { MailService } from './mail.service.js';
 import { StorageService } from './storage.service.js';
+
+const logger = new Logger('Redis');
 
 @Global()
 @Module({
@@ -16,8 +18,14 @@ import { StorageService } from './storage.service.js';
     {
       provide: REDIS,
       inject: [APP_CONFIG],
-      useFactory: (config: AppConfig) =>
-        new Redis(config.REDIS_URL, { lazyConnect: true, maxRetriesPerRequest: 2 }),
+      useFactory: (config: AppConfig) => {
+        const redis = new Redis(config.REDIS_URL, { lazyConnect: true, maxRetriesPerRequest: 2 });
+        // Callers degrade gracefully when Redis is down; log instead of crashing on error.
+        redis.on('error', (err: Error) => {
+          logger.warn(`redis: ${err.message}`);
+        });
+        return redis;
+      },
     },
     {
       provide: TenantScopedCache,
