@@ -150,7 +150,20 @@ export function NotFoundPage() {
 }
 
 /** Rendered when GET /branding 404s: the Host doesn't map to any tenant. */
-export function WorkspaceMissingPage() {
+export function WorkspaceMissingPage({ suspended = false }: { suspended?: boolean }) {
+  if (suspended) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-slate-50 px-4 text-center">
+        <div className="max-w-md">
+          <Lock className="mx-auto mb-4 size-10 text-slate-400" />
+          <h1 className="text-2xl font-semibold">This workspace is suspended</h1>
+          <p className="mt-2 text-sm text-slate-600">
+            Contact your ResourceHub administrator to restore access.
+          </p>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="grid min-h-screen place-items-center bg-slate-50 px-4 text-center">
       <div className="max-w-md">

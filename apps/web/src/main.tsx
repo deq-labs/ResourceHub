@@ -27,7 +27,10 @@ const queryClient = new QueryClient({
 function TenantApp() {
   const branding = useBrandingQuery();
   if (branding.isPending) return <PageSpinner />;
-  if (branding.error) return <WorkspaceMissingPage />;
+  if (branding.error) {
+    const suspended = branding.error instanceof ApiError && branding.error.problem.status === 403;
+    return <WorkspaceMissingPage suspended={suspended} />;
+  }
   return (
     <BrandingProvider branding={branding.data}>
       <AuthProvider>

@@ -18,6 +18,10 @@ import { IdentityService } from './identity.service.js';
 import { OidcClient } from './oidc.client.js';
 import { SessionService } from './session.service.js';
 import { TokenService } from './token.service.js';
+import type { Redis } from 'ioredis';
+import { REDIS } from '../../tokens.js';
+import { TenantScopedCache } from '../../infra/tenant-cache.js';
+import type { ImpersonationClaims } from '../platform/platform.controller.js';
 
 class SessionResponseDto extends createZodDto(SessionResponse) {}
 
@@ -67,6 +71,7 @@ export class AuthController {
     private readonly auth: AuthService,
     private readonly audit: AuditService,
     private readonly db: DbService,
+    @Inject(REDIS) private readonly redis: Redis,
   ) {}
 
   private callbackUrl(req: FastifyRequest): string {
@@ -233,6 +238,61 @@ export class AuthController {
     return req.site.kind === 'tenant'
       ? this.auth.issueForTenant(req.site.tenant.id, result.session)
       : this.auth.issueForPlatform(result.session);
+  }
+
+  /**
+   * Redeem a platform impersonation ticket on the tenant host. The ticket is signed, lives 60s,
+   * is bound to this tenant, and is single-use (its jti is burned in Redis). The resulting
+   * session carries impersonator_id, so every audit row names both people.
+   */
+  @Get('impersonate')
+  @RouteConfig(authRateLimit)
+  async impersonate(
+    @Req() req: FastifyRequest,
+    @Res() reply: FastifyReply,
+    @Query() query: unknown,
+  ): Promise<void> {
+    const { ticket } = z.object({ ticket: z.string().max(4000) }).parse(query);
+    if (req.site.kind !== 'tenant') throw problems.unknownHost();
+    const tenantId = req.site.tenant.id;
+    let claims: ImpersonationClaims;
+    try {
+      claims = await this.tokens.verifyEphemeral<ImpersonationClaims>('impersonation', ticket);
+    } catch {
+      throw problems.unauthorized('This impersonation link is invalid or expired.');
+    }
+    if (claims.tid !== tenantId) {
+      throw problems.forbidden('This impersonation link is for another workspace.');
+    }
+    const jtiKey = TenantScopedCache.key(tenantId, `imp-jti:${claims.jti}`);
+    if ((await this.redis.set(jtiKey, '1', 'EX', 300, 'NX')) !== 'OK') {
+      throw problems.unauthorized('This impersonation link was already used.');
+    }
+
+    const { refreshToken } = await runWithTenant({ tenantId, userId: claims.sub }, async () => {
+      const created = await this.sessions.createTenantSession(
+        tenantId,
+        claims.sub,
+        this.meta(req),
+        claims.act,
+      );
+      await this.db.withTenantTx((tx) =>
+        this.audit.record(
+          tx,
+          tenantId,
+          { actorId: claims.sub, impersonatorId: claims.act, ip: req.ip },
+          {
+            action: 'auth.impersonation_started',
+            entity: 'session',
+            entityId: created.session.id,
+            diff: { reason: claims.reason, impersonatorName: claims.actName },
+          },
+        ),
+      );
+      return created;
+    });
+    this.setRefreshCookie(reply, refreshToken);
+    return reply.redirect('/', 302);
   }
 
   @Post('logout')

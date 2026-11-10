@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion -- a route referencing itself inside its own component is inferred as any by TanStack; the assertions restore the types. */
 import {
   createRootRoute,
   createRoute,
@@ -7,9 +7,8 @@ import {
   Outlet,
   useLocation,
 } from '@tanstack/react-router';
-import type { Role } from '@resourcehub/contracts';
 import { AppShell } from '@/components/AppShell';
-import { EmptyState, PageSpinner } from '@/components/ui';
+import { PageSpinner } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 import { HomePage } from '@/routes/home';
 import { ResourcesPage, type ResourceSearch } from '@/routes/resources';
@@ -18,7 +17,7 @@ import { ResourceEditorPage } from '@/routes/resource-editor';
 import { TaxonomyPage } from '@/routes/taxonomy';
 import { InvitePage, NoAccessPage, NotFoundPage, SignInPage } from '@/routes/public-pages';
 import { adminRoutes } from '@/routes/admin';
-import { ShieldOff } from 'lucide-react';
+import { RequireRole } from '@/components/RequireRole';
 
 const str = (v: unknown) => (typeof v === 'string' && v.length > 0 ? v : undefined);
 
@@ -37,7 +36,7 @@ const signInRoute = createRoute({
     returnTo: str(s.returnTo),
   }),
   component: function SignIn() {
-    const { error, returnTo } = signInRoute.useSearch();
+    const { error, returnTo } = signInRoute.useSearch() as { error?: string; returnTo?: string };
     const { state } = useAuth();
     if (state.status === 'authenticated') return <Navigate to={returnTo ?? '/'} />;
     return <SignInPage {...(error ? { error } : {})} {...(returnTo ? { returnTo } : {})} />;
@@ -48,7 +47,7 @@ const inviteRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/invite/$token',
   component: function Invite() {
-    const { token } = inviteRoute.useParams();
+    const { token } = inviteRoute.useParams() as { token: string };
     return <InvitePage token={token} />;
   },
 });
@@ -67,18 +66,6 @@ function MemberLayout() {
       <Outlet />
     </AppShell>
   );
-}
-
-export function RequireRole({ min, children }: { min: Role; children: ReactNode }) {
-  const { can } = useAuth();
-  if (!can(min)) {
-    return (
-      <EmptyState icon={<ShieldOff />} title="You don't have access to this page">
-        It needs the {min} role or higher.
-      </EmptyState>
-    );
-  }
-  return <>{children}</>;
 }
 
 export const memberRoute = createRoute({
@@ -107,7 +94,7 @@ const resourcesRoute = createRoute({
     };
   },
   component: function Resources() {
-    return <ResourcesPage search={resourcesRoute.useSearch()} />;
+    return <ResourcesPage search={resourcesRoute.useSearch() as ResourceSearch} />;
   },
 });
 
@@ -125,7 +112,7 @@ const resourceRoute = createRoute({
   getParentRoute: () => memberRoute,
   path: '/resources/$slug',
   component: function Resource() {
-    const { slug } = resourceRoute.useParams();
+    const { slug } = resourceRoute.useParams() as { slug: string };
     return <ResourceDetailPage slug={slug} />;
   },
 });
@@ -134,7 +121,7 @@ const editResourceRoute = createRoute({
   getParentRoute: () => memberRoute,
   path: '/resources/$slug/edit',
   component: function EditResource() {
-    const { slug } = editResourceRoute.useParams();
+    const { slug } = editResourceRoute.useParams() as { slug: string };
     return (
       <RequireRole min="editor">
         <ResourceEditorPage slug={slug} />
