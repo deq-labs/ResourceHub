@@ -22,6 +22,13 @@
       "when": 1794345479051,
       "tag": "0002_hub",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1794348040101,
+      "tag": "0003_integrations",
+      "breakpoints": true
     }
   ]
 }

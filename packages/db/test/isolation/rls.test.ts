@@ -323,6 +323,8 @@ describe('composite foreign keys block cross-tenant references', () => {
       'resource_tags',
       'files',
       'tenant_branding',
+      'integrations',
+      'integration_runs',
     ]) {
       const { rows } = await rawAsApp<{ n: number }>(`SELECT count(*)::int AS n FROM ${t}`);
       expect(rows[0]?.n, t).toBe(0);

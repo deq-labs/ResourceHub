@@ -564,6 +564,118 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/integrations/providers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["IntegrationsController_providers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/integrations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["IntegrationsController_list"];
+        put?: never;
+        post: operations["IntegrationsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/integrations/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["IntegrationsController_remove"];
+        options?: never;
+        head?: never;
+        patch: operations["IntegrationsController_update"];
+        trace?: never;
+    };
+    "/api/v1/integrations/{id}/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["IntegrationsController_test"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/integrations/{id}/sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["IntegrationsController_sync"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/integrations/{id}/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["IntegrationsController_runs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/integrations/push": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["IntegrationsController_push"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1151,6 +1263,193 @@ export interface components {
                 } | null;
             }[];
             nextCursor: string | null;
+        };
+        ProviderListDto_Output: {
+            data: {
+                provider: string;
+                /** @enum {string} */
+                kind: "rest" | "soap";
+                label: string;
+                description: string;
+                needsSecret: boolean;
+                supportsPush: boolean;
+                defaults: {
+                    [key: string]: unknown;
+                };
+            }[];
+        };
+        IntegrationListDto_Output: {
+            data: {
+                /** Format: uuid */
+                id: string;
+                /** @enum {string} */
+                kind: "rest" | "soap";
+                provider: string;
+                name: string;
+                config: {
+                    [key: string]: unknown;
+                };
+                secretRef: string | null;
+                enabled: boolean;
+                scheduleMinutes: number | null;
+                /** Format: date-time */
+                lastSyncedAt: string | null;
+                lastRun: {
+                    /** Format: uuid */
+                    id: string;
+                    /** @enum {string} */
+                    type: "sync" | "push";
+                    /** @enum {string} */
+                    trigger: "manual" | "schedule";
+                    /** @enum {string} */
+                    status: "queued" | "running" | "succeeded" | "failed";
+                    attempts: number;
+                    /** Format: date-time */
+                    startedAt: string | null;
+                    /** Format: date-time */
+                    finishedAt: string | null;
+                    stats: {
+                        fetched?: number;
+                        created?: number;
+                        updated?: number;
+                        unchanged?: number;
+                        pushedReference?: string;
+                    } | null;
+                    error: string | null;
+                    traceId: string | null;
+                    /** Format: date-time */
+                    createdAt: string;
+                } | null;
+                supportsPush: boolean;
+            }[];
+        };
+        CreateIntegrationDto: {
+            provider: string;
+            name: string;
+            /** @default {} */
+            config: {
+                [key: string]: unknown;
+            };
+            secretRef?: string | null;
+            scheduleMinutes?: number | null;
+        };
+        IntegrationDto_Output: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            kind: "rest" | "soap";
+            provider: string;
+            name: string;
+            config: {
+                [key: string]: unknown;
+            };
+            secretRef: string | null;
+            enabled: boolean;
+            scheduleMinutes: number | null;
+            /** Format: date-time */
+            lastSyncedAt: string | null;
+            lastRun: {
+                /** Format: uuid */
+                id: string;
+                /** @enum {string} */
+                type: "sync" | "push";
+                /** @enum {string} */
+                trigger: "manual" | "schedule";
+                /** @enum {string} */
+                status: "queued" | "running" | "succeeded" | "failed";
+                attempts: number;
+                /** Format: date-time */
+                startedAt: string | null;
+                /** Format: date-time */
+                finishedAt: string | null;
+                stats: {
+                    fetched?: number;
+                    created?: number;
+                    updated?: number;
+                    unchanged?: number;
+                    pushedReference?: string;
+                } | null;
+                error: string | null;
+                traceId: string | null;
+                /** Format: date-time */
+                createdAt: string;
+            } | null;
+            supportsPush: boolean;
+        };
+        UpdateIntegrationDto: {
+            name?: string;
+            config?: {
+                [key: string]: unknown;
+            };
+            secretRef?: string | null;
+            enabled?: boolean;
+            scheduleMinutes?: number | null;
+        };
+        ConnectionTestDto_Output: {
+            ok: boolean;
+            code: string | null;
+            message: string | null;
+            latencyMs: number;
+        };
+        RunDto_Output: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            type: "sync" | "push";
+            /** @enum {string} */
+            trigger: "manual" | "schedule";
+            /** @enum {string} */
+            status: "queued" | "running" | "succeeded" | "failed";
+            attempts: number;
+            /** Format: date-time */
+            startedAt: string | null;
+            /** Format: date-time */
+            finishedAt: string | null;
+            stats: {
+                fetched?: number;
+                created?: number;
+                updated?: number;
+                unchanged?: number;
+                pushedReference?: string;
+            } | null;
+            error: string | null;
+            traceId: string | null;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        RunListDto_Output: {
+            data: {
+                /** Format: uuid */
+                id: string;
+                /** @enum {string} */
+                type: "sync" | "push";
+                /** @enum {string} */
+                trigger: "manual" | "schedule";
+                /** @enum {string} */
+                status: "queued" | "running" | "succeeded" | "failed";
+                attempts: number;
+                /** Format: date-time */
+                startedAt: string | null;
+                /** Format: date-time */
+                finishedAt: string | null;
+                stats: {
+                    fetched?: number;
+                    created?: number;
+                    updated?: number;
+                    unchanged?: number;
+                    pushedReference?: string;
+                } | null;
+                error: string | null;
+                traceId: string | null;
+                /** Format: date-time */
+                createdAt: string;
+            }[];
+        };
+        PushResourceDto: {
+            /** Format: uuid */
+            integrationId: string;
+            /** Format: uuid */
+            resourceId: string;
         };
     };
     responses: never;
@@ -2143,6 +2442,206 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PlatformAuditDto_Output"];
+                };
+            };
+        };
+    };
+    IntegrationsController_providers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderListDto_Output"];
+                };
+            };
+        };
+    };
+    IntegrationsController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntegrationListDto_Output"];
+                };
+            };
+        };
+    };
+    IntegrationsController_create: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description 8-128 chars [A-Za-z0-9_-] */
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateIntegrationDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntegrationDto_Output"];
+                };
+            };
+        };
+    };
+    IntegrationsController_remove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    IntegrationsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateIntegrationDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntegrationDto_Output"];
+                };
+            };
+        };
+    };
+    IntegrationsController_test: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectionTestDto_Output"];
+                };
+            };
+        };
+    };
+    IntegrationsController_sync: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description 8-128 chars [A-Za-z0-9_-] */
+                "Idempotency-Key": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunDto_Output"];
+                };
+            };
+        };
+    };
+    IntegrationsController_runs: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunListDto_Output"];
+                };
+            };
+        };
+    };
+    IntegrationsController_push: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description 8-128 chars [A-Za-z0-9_-] */
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PushResourceDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunDto_Output"];
                 };
             };
         };

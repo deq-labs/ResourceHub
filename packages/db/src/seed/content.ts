@@ -307,7 +307,54 @@ async function seedHub(db: Parameters<SeedStep>[0], hub: SeedHub): Promise<void>
   }
 }
 
+/** Demo integrations: private partner mocks for Contoso, public APIs for Northwind. */
+async function seedIntegrations(db: Parameters<SeedStep>[0]): Promise<void> {
+  const c = DEMO_TENANTS.contoso.id;
+  const n = DEMO_TENANTS.northwind.id;
+  await db.insert(schema.integrations).values([
+    {
+      tenantId: c,
+      kind: 'soap',
+      provider: 'partner-docs',
+      name: 'Partner document library',
+      config: {
+        endpoint: 'http://localhost:8088/soap/partner-docs',
+        username: 'partner-demo',
+        passwordDigest: false,
+      },
+      secretRef: 'env:PARTNER_SOAP_PASSWORD',
+      scheduleMinutes: 60,
+    },
+    {
+      tenantId: c,
+      kind: 'rest',
+      provider: 'partner-feed',
+      name: 'Partner content feed',
+      config: { baseUrl: 'http://localhost:8089' },
+      secretRef: 'env:PARTNER_FEED_TOKEN',
+    },
+    {
+      tenantId: n,
+      kind: 'soap',
+      provider: 'country-info',
+      name: 'European country profiles',
+      config: {
+        endpoint: 'http://webservices.oorsprong.org/websamples.countryinfo/CountryInfoService.wso',
+        continent: 'EU',
+      },
+    },
+    {
+      tenantId: n,
+      kind: 'rest',
+      provider: 'spaceflight-news',
+      name: 'Industry news',
+      config: { baseUrl: 'https://api.spaceflightnewsapi.net', maxItems: 12 },
+    },
+  ]);
+}
+
 export const seedContent: SeedStep = async (db) => {
   await seedHub(db, CONTOSO);
   await seedHub(db, NORTHWIND);
+  await seedIntegrations(db);
 };

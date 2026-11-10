@@ -6,6 +6,7 @@ import { DbService } from './db.service.js';
 import { TenantScopedCache } from './tenant-cache.js';
 import { MailService } from './mail.service.js';
 import { StorageService } from './storage.service.js';
+import { QueueService } from './queue.service.js';
 
 const logger = new Logger('Redis');
 
@@ -15,6 +16,7 @@ const logger = new Logger('Redis');
     DbService,
     MailService,
     StorageService,
+    QueueService,
     {
       provide: REDIS,
       inject: [APP_CONFIG],
@@ -33,7 +35,7 @@ const logger = new Logger('Redis');
       useFactory: (redis: Redis) => new TenantScopedCache(redis),
     },
   ],
-  exports: [DbService, REDIS, TenantScopedCache, MailService, StorageService],
+  exports: [DbService, REDIS, TenantScopedCache, MailService, StorageService, QueueService],
 })
 export class InfraModule implements OnApplicationShutdown {
   constructor(@Inject(REDIS) private readonly redis: Redis) {}

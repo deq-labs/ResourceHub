@@ -52,3 +52,8 @@ export {
   count,
 } from 'drizzle-orm';
 export type { SQL } from 'drizzle-orm';
+export {
+  upsertExternalResource,
+  slugify,
+  type ExternalRecord,
+} from './domain/external-resources.js';

@@ -9,11 +9,13 @@ import {
   ImageUp,
   Mail,
   Palette,
+  PlugZap,
   ScrollText,
   ShieldCheck,
   Trash2,
   Users,
 } from 'lucide-react';
+import { IntegrationsPage } from './integrations';
 import { toast } from 'sonner';
 import { RequireRole } from '@/components/RequireRole';
 import {
@@ -42,6 +44,7 @@ function AdminLayout() {
     { to: '/admin/invitations', label: 'Invitations', icon: Mail },
     { to: '/admin/branding', label: 'Branding', icon: Palette },
     { to: '/admin/domains', label: 'Domains', icon: Globe },
+    { to: '/admin/integrations', label: 'Integrations', icon: PlugZap },
     { to: '/admin/audit', label: 'Audit log', icon: ScrollText },
   ];
   return (
@@ -734,6 +737,11 @@ export function adminRoutes(parent: AnyRoute) {
       }),
       createRoute({ getParentRoute: () => layout, path: '/branding', component: BrandingPage }),
       createRoute({ getParentRoute: () => layout, path: '/domains', component: DomainsPage }),
+      createRoute({
+        getParentRoute: () => layout,
+        path: '/integrations',
+        component: IntegrationsPage,
+      }),
       createRoute({ getParentRoute: () => layout, path: '/audit', component: AuditPage }),
     ]),
   ];

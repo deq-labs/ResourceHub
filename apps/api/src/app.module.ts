@@ -11,6 +11,7 @@ import { AuthModule } from './modules/auth/auth.module.js';
 import { DevIdpModule } from './modules/dev-idp/dev-idp.module.js';
 import { HubModule } from './modules/hub.module.js';
 import { AdminModule } from './modules/admin/admin.module.js';
+import { IntegrationsModule } from './modules/integrations/integrations.module.js';
 import { AuthGuard } from './common/auth.guard.js';
 import { HostScopeGuard } from './common/host-scope.js';
 import { ProblemDetailsFilter } from './common/problem.js';
@@ -31,6 +32,7 @@ export class AppModule {
         AuthModule,
         HubModule,
         AdminModule,
+        IntegrationsModule,
         ...(config.AUTH_PROVIDER === 'dev' ? [DevIdpModule] : []),
       ],
       controllers: [HealthController],

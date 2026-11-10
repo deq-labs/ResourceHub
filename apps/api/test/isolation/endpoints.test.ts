@@ -34,6 +34,11 @@ beforeAll(async () => {
         .where(eq(schema.categories.tenantId, B))
         .limit(1);
       const [tag] = await tx.select().from(schema.tags).where(eq(schema.tags.tenantId, B)).limit(1);
+      const [integ] = await tx
+        .select()
+        .from(schema.integrations)
+        .where(eq(schema.integrations.tenantId, B))
+        .limit(1);
       const fileId = newId();
       await tx.insert(schema.files).values({
         id: fileId,
@@ -61,6 +66,7 @@ beforeAll(async () => {
         .returning();
       Object.assign(bIds, {
         bUser: '01960000-0000-7000-8000-0000000000b2',
+        integration: integ!.id,
         resource: res!.id,
         resourceSlug: res!.slug,
         category: cat!.id,
@@ -70,6 +76,8 @@ beforeAll(async () => {
         invitation: inv!.id,
       });
       bMarkers.push(
+        integ!.id,
+        integ!.name,
         res!.id,
         res!.title,
         cat!.id,
@@ -143,6 +151,63 @@ const cases: Case[] = [
     route: '/api/v1/members/{userId}',
     url: () => `/api/v1/members/${bIds.bUser}`,
     expect: [404],
+  },
+  {
+    method: 'GET',
+    route: '/api/v1/integrations',
+    url: () => '/api/v1/integrations',
+    expect: [200],
+  },
+  {
+    method: 'GET',
+    route: '/api/v1/integrations/providers',
+    url: () => '/api/v1/integrations/providers',
+    expect: [200],
+  },
+  {
+    method: 'GET',
+    route: '/api/v1/integrations/{id}/runs',
+    url: () => `/api/v1/integrations/${bIds.integration}/runs`,
+    expect: [200],
+  },
+  {
+    method: 'PATCH',
+    route: '/api/v1/integrations/{id}',
+    url: () => `/api/v1/integrations/${bIds.integration}`,
+    body: () => ({ name: 'pwned' }),
+    expect: [404],
+  },
+  {
+    method: 'DELETE',
+    route: '/api/v1/integrations/{id}',
+    url: () => `/api/v1/integrations/${bIds.integration}`,
+    expect: [404],
+  },
+  {
+    method: 'POST',
+    route: '/api/v1/integrations/{id}/test',
+    url: () => `/api/v1/integrations/${bIds.integration}/test`,
+    expect: [404],
+  },
+  {
+    method: 'POST',
+    route: '/api/v1/integrations/{id}/sync',
+    url: () => `/api/v1/integrations/${bIds.integration}/sync`,
+    expect: [404],
+  },
+  {
+    method: 'POST',
+    route: '/api/v1/integrations/push',
+    url: () => '/api/v1/integrations/push',
+    body: () => ({ integrationId: bIds.integration, resourceId: bIds.resource }),
+    expect: [404],
+  },
+  {
+    method: 'POST',
+    route: '/api/v1/integrations',
+    url: () => '/api/v1/integrations',
+    body: () => ({ provider: 'spaceflight-news', name: 'A only feed' }),
+    expect: [201],
   },
   // writes against B's ids
   {
