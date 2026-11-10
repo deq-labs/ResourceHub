@@ -1,4 +1,4 @@
-import { inArray } from 'drizzle-orm';
+import { inArray, sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import pg from 'pg';
 import * as schema from '../schema/index.js';
@@ -18,6 +18,8 @@ export async function seedDemo(platformUrl: string, steps: SeedStep[] = []): Pro
   const db = drizzle(pool, { schema });
   try {
     await db.transaction(async (tx) => {
+      // Resetting demo tenants cascades into the append-only audit log; opt in explicitly.
+      await tx.execute(sql`select set_config('app.audit_purge', 'on', true)`);
       const tenantIds = Object.values(DEMO_TENANTS).map((t) => t.id);
       // Cascades to every tenant-owned table.
       await tx.delete(schema.tenants).where(inArray(schema.tenants.id, tenantIds));

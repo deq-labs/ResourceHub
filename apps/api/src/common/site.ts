@@ -22,6 +22,7 @@ export interface AuthUser {
   role?: string;
   /** Platform admin acting as this user (impersonation), if any. */
   impersonatorId?: string;
+  impersonatorName?: string;
   sessionId?: string;
 }
 

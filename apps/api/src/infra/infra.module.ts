@@ -4,11 +4,13 @@ import { APP_CONFIG, REDIS } from '../tokens.js';
 import type { AppConfig } from '../config.js';
 import { DbService } from './db.service.js';
 import { TenantScopedCache } from './tenant-cache.js';
+import { MailService } from './mail.service.js';
 
 @Global()
 @Module({
   providers: [
     DbService,
+    MailService,
     {
       provide: REDIS,
       inject: [APP_CONFIG],
@@ -21,7 +23,7 @@ import { TenantScopedCache } from './tenant-cache.js';
       useFactory: (redis: Redis) => new TenantScopedCache(redis),
     },
   ],
-  exports: [DbService, REDIS, TenantScopedCache],
+  exports: [DbService, REDIS, TenantScopedCache, MailService],
 })
 export class InfraModule implements OnApplicationShutdown {
   constructor(@Inject(REDIS) private readonly redis: Redis) {}
