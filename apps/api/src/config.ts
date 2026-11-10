@@ -46,6 +46,20 @@ const ConfigSchema = z.object({
   /** Scheme used to build absolute callback URLs (https behind Front Door). */
   PUBLIC_SCHEME: z.enum(['http', 'https']).default('http'),
 
+  // ---- Blob storage ---------------------------------------------------------------------
+  /** Azurite's well-known public dev key. In Azure, set STORAGE_ACCOUNT_URL instead (managed identity). */
+  STORAGE_CONNECTION_STRING: z
+    .string()
+    .default(
+      'DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;',
+    ),
+  STORAGE_ACCOUNT_URL: z.string().optional(),
+  STORAGE_CONTAINER: z.string().default('tenant-files'),
+
+  // ---- Custom domains -------------------------------------------------------------------
+  /** `dns`: real TXT lookup. `dev`: *.localhost / *.test hostnames verify instantly for demos. */
+  DOMAIN_VERIFICATION_MODE: z.enum(['dns', 'dev']).default('dev'),
+
   // ---- Email ------------------------------------------------------------------------------
   SMTP_URL: z.string().default('smtp://localhost:1025'),
   MAIL_FROM: z.string().default('ResourceHub <no-reply@resourcehub.local>'),
@@ -73,6 +87,9 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     }
     if (config.AUTH_PROVIDER === 'dev' && process.env.ALLOW_DEV_IDP_IN_PRODUCTION !== 'true') {
       throw new Error('AUTH_PROVIDER=dev is not allowed in production');
+    }
+    if (config.DOMAIN_VERIFICATION_MODE === 'dev') {
+      throw new Error('DOMAIN_VERIFICATION_MODE=dev is not allowed in production');
     }
   }
   return config;

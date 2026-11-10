@@ -1,6 +1,7 @@
 import { createServer } from 'node:net';
 import { expect } from 'vitest';
 import { createApp } from '../src/app.factory.js';
+import { StorageService } from '../src/infra/storage.service.js';
 import { testConfig, type TestApp, type TestResponse } from './helpers.js';
 
 export async function freePort(): Promise<number> {
@@ -30,6 +31,7 @@ export async function createListeningApp(overrides: Record<string, string> = {})
       ...overrides,
     }),
   );
+  await app.get(StorageService).ensureReady();
   await app.listen({ port, host: '127.0.0.1' });
   return app;
 }

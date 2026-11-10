@@ -26,7 +26,7 @@ export class MeController {
   ) {}
 
   @Get()
-  @ZodResponse({ type: MeDto })
+  @ZodResponse({ status: 200, type: MeDto })
   async me(@Req() req: FastifyRequest) {
     const auth = authOf(req);
     const memberships = await this.identity.memberships(auth.id);
@@ -48,7 +48,7 @@ export class MeController {
   }
 
   @Patch()
-  @ZodResponse({ type: MeDto })
+  @ZodResponse({ status: 200, type: MeDto })
   async update(@Req() req: FastifyRequest, @Body() body: UpdateMeDto) {
     if (req.site.kind !== 'tenant') throw problems.notFound();
     const auth = authOf(req);

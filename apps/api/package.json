@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "test": "vitest run --passWithNoTests --project unit",
     "start": "node --enable-source-maps dist/main.js",
-    "test:integration": "vitest run --project integration"
+    "test:integration": "vitest run --project integration",
+    "gen:openapi": "node dist/gen-openapi.js"
   },
   "devDependencies": {
     "@resourcehub/config": "workspace:*",
@@ -26,6 +27,8 @@
     "vitest": "^3.2.7"
   },
   "dependencies": {
+    "@azure/identity": "^4.14.1",
+    "@azure/storage-blob": "^12.34.0",
     "@fastify/cookie": "^11.1.5",
     "@fastify/helmet": "^13.2.0",
     "@fastify/rate-limit": "^10.3.0",

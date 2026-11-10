@@ -1,4 +1,5 @@
+import { seedContent } from './content.js';
 import type { SeedStep } from './seed.js';
 
-/** Seed steps added by later phases (resources, branding, integrations). */
-export const contentSeedSteps: SeedStep[] = [];
+/** Demo content for both tenants: branding, taxonomy, resources. */
+export const contentSeedSteps: SeedStep[] = [seedContent];

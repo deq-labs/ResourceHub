@@ -1,5 +1,6 @@
 import { Body, Controller, Get, HttpCode, Post, Query, Res } from '@nestjs/common';
 import { DEMO_USERS } from '@resourcehub/db';
+import { ApiExcludeController } from '@nestjs/swagger';
 import type { FastifyReply } from 'fastify';
 import { z } from 'zod';
 import { ForHost } from '../../common/host-scope.js';
@@ -35,6 +36,7 @@ const PAGE_CSP =
   "default-src 'none'; style-src 'unsafe-inline'; form-action 'self' http://localhost:* http://*.localhost:*; frame-ancestors 'none'";
 
 /** Local stand-in for Entra External ID. Only mounted when AUTH_PROVIDER=dev. */
+@ApiExcludeController()
 @Controller('dev-idp')
 @ForHost('any')
 @Public()

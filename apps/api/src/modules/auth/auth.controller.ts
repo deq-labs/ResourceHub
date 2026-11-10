@@ -1,7 +1,9 @@
 import { Controller, Get, HttpCode, Inject, Logger, Post, Query, Req, Res } from '@nestjs/common';
 import { RouteConfig } from '@nestjs/platform-fastify';
 import { runWithTenant } from '@resourcehub/db';
-import type { SessionResponse } from '@resourcehub/contracts';
+import { SessionResponse } from '@resourcehub/contracts';
+import { ApiTags } from '@nestjs/swagger';
+import { createZodDto, ZodResponse } from 'nestjs-zod';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { APP_CONFIG } from '../../tokens.js';
@@ -16,6 +18,8 @@ import { IdentityService } from './identity.service.js';
 import { OidcClient } from './oidc.client.js';
 import { SessionService } from './session.service.js';
 import { TokenService } from './token.service.js';
+
+class SessionResponseDto extends createZodDto(SessionResponse) {}
 
 export const REFRESH_COOKIE = 'rh_refresh';
 const OIDC_COOKIE = 'rh_oidc';
@@ -47,6 +51,7 @@ export function safeReturnTo(value: string | undefined): string {
 
 const authRateLimit = { rateTier: 'auth' };
 
+@ApiTags('auth')
 @Controller('auth')
 @ForHost('site')
 @Public()
@@ -203,6 +208,7 @@ export class AuthController {
   /** Rotate the refresh cookie and mint a 15-minute access token. Called at SPA boot and before expiry. */
   @Post('refresh')
   @HttpCode(200)
+  @ZodResponse({ status: 200, type: SessionResponseDto })
   @RouteConfig(authRateLimit)
   async refresh(
     @Req() req: FastifyRequest,
