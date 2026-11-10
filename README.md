@@ -135,6 +135,22 @@ OpenTelemetry stays off and costs nothing.
 
 ---
 
+## Deployment
+
+There are two supported targets, built from the same code:
+
+| Target                        | What it is                                                                                                                                                     | Where                                                                         |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| **Azure** (production design) | Container Apps, Front Door + WAF, Postgres Flexible Server, Key Vault, Entra External ID, App Insights. Terraform plus GitHub Actions with OIDC                | [`docs/runbooks/azure-deploy.md`](docs/runbooks/azure-deploy.md)              |
+| **Free hosted demo**          | Vercel (SPA and edge proxy), Render (API and worker in one container), Neon (Postgres), Render Key Value (Redis). Uses the "sign in as" demo identity provider | [`deploy/free/`](deploy/free), [`apps/web/vercel.json`](apps/web/vercel.json) |
+
+The free demo keeps the same isolation model: Postgres RLS with a non-owner app role, host-based
+tenant resolution (each tenant gets its own `*.vercel.app` alias), and an API that only accepts
+traffic carrying the edge's shared secret. Setup notes for your own accounts go in a gitignored
+`*.local.md` file.
+
+---
+
 ## Repository layout
 
 ```
@@ -147,6 +163,7 @@ packages/
   contracts/  Zod schemas shared by API and SPA, the generated OpenAPI spec and typed client
   integrations/  Adapter interface, REST + SOAP clients, retry, circuit breaker, SSRF guard
   config/     Shared tsconfig / ESLint presets
+deploy/free/      Free-tier image (API + worker in one container) for Render
 infra/terraform/  bootstrap (state + GitHub OIDC), module `resourcehub`, envs dev + prod
 loadtest/k6/      Two-tenant load test with an isolation check on every response
 docs/             Architecture, demo guide, ADRs, security, performance, runbooks

@@ -6,6 +6,7 @@ import { seedDemo } from './seed/seed.js';
 import { contentSeedSteps } from './seed/steps.js';
 import { bootstrapRoles } from './bootstrap.js';
 import { explainHotQueries, perfClean, perfSeed } from './perf.js';
+import { addVerifiedDomain } from './domains.js';
 
 const LOCAL = 'postgres://%s@localhost:55432/resourcehub';
 const env = (key: string, fallback: string) => process.env[key] ?? fallback;
@@ -39,6 +40,14 @@ async function main(): Promise<void> {
         return;
       }
       console.log('RLS coverage check passed: every table has RLS + FORCE + a policy.');
+      return;
+    }
+    case 'map-domain': {
+      // Operator: attach a pre-verified hostname (e.g. a free *.vercel.app alias) to a tenant.
+      const [slug, hostname] = [process.argv[3], process.argv[4]];
+      if (!slug || !hostname) throw new Error('Usage: map-domain <tenant-slug> <hostname>');
+      await addVerifiedDomain(platformUrl, slug, hostname);
+      console.log(`${hostname} now serves tenant "${slug}".`);
       return;
     }
     case 'perf-seed':
@@ -82,7 +91,9 @@ async function main(): Promise<void> {
       return;
     }
     default:
-      console.error('Usage: resourcehub-db <bootstrap|migrate|seed|check-rls>');
+      console.error(
+        'Usage: resourcehub-db <bootstrap|migrate|seed|check-rls|map-domain|perf-seed|perf-clean|explain>',
+      );
       process.exitCode = 2;
   }
 }

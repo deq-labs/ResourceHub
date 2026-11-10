@@ -29,6 +29,10 @@ export async function bootstrapRoles(opts: BootstrapOptions): Promise<void> {
       await client.query(`${verb} ROLE ${ident(name)} WITH ${attrs} PASSWORD ${lit(password)}`);
     }
     await client.query('GRANT resourcehub_platform TO resourcehub_migrator');
+    // Managed Postgres admins (Azure Flexible Server, Neon) are not superusers. Since PG16, handing
+    // ownership to a role requires being able to SET ROLE to it, which a role's creator doesn't
+    // get by default, so the admin grants itself membership first. Idempotent.
+    await client.query('GRANT resourcehub_migrator TO CURRENT_USER');
     const db = ident(opts.database);
     await client.query(`ALTER DATABASE ${db} OWNER TO resourcehub_migrator`);
     await client.query('ALTER SCHEMA public OWNER TO resourcehub_migrator');

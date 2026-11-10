@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
 import type { IncomingMessage } from 'node:http';
 import fastifyCookie from '@fastify/cookie';
 import fastifyHelmet from '@fastify/helmet';
@@ -13,6 +13,13 @@ import { TenantResolverService } from './modules/tenants/tenant-resolver.service
 import { REDIS } from './tokens.js';
 
 type RouteTier = { rateTier?: string };
+
+/** Constant-time comparison of a header against a secret (hashing equalises the lengths). */
+function safeEqual(header: string | string[] | undefined, secret: string): boolean {
+  if (typeof header !== 'string') return false;
+  const digest = (s: string) => createHash('sha256').update(s).digest();
+  return timingSafeEqual(digest(header), digest(secret));
+}
 
 export async function createApp(config: AppConfig): Promise<NestFastifyApplication> {
   const adapter = new FastifyAdapter({
@@ -99,12 +106,13 @@ export async function createApp(config: AppConfig): Promise<NestFastifyApplicati
   // Decorated with null up front so Fastify keeps a stable request shape; set in onRequest.
   fastify.decorateRequest('site', null as never);
   fastify.addHook('onRequest', async (req, reply) => {
-    // Origin lock-down: in Azure only Front Door may reach the API (it stamps X-Azure-FDID).
-    if (
-      config.FRONT_DOOR_ID &&
-      req.headers['x-azure-fdid'] !== config.FRONT_DOOR_ID &&
-      !req.url.startsWith('/api/v1/health')
-    ) {
+    // Origin lock-down: only our edge may reach the API. Azure Front Door stamps X-Azure-FDID;
+    // other edges (the free Vercel deployment) stamp a shared X-Edge-Secret.
+    const viaFrontDoor =
+      !config.FRONT_DOOR_ID || req.headers['x-azure-fdid'] === config.FRONT_DOOR_ID;
+    const viaEdgeSecret =
+      !config.EDGE_SECRET || safeEqual(req.headers['x-edge-secret'], config.EDGE_SECRET);
+    if ((!viaFrontDoor || !viaEdgeSecret) && !req.url.startsWith('/api/v1/health')) {
       return reply.code(403).header('content-type', 'application/problem+json').send({
         type: 'https://resourcehub.dev/problems/forbidden',
         title: 'Forbidden',

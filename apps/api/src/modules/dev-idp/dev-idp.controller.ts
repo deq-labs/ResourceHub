@@ -32,9 +32,6 @@ const TokenRequest = z.object({
   client_id: z.string(),
 });
 
-const PAGE_CSP =
-  "default-src 'none'; style-src 'unsafe-inline'; form-action 'self' http://localhost:* http://*.localhost:*; frame-ancestors 'none'";
-
 /** Local stand-in for Entra External ID. Only mounted when AUTH_PROVIDER=dev. */
 @ApiExcludeController()
 @Controller('dev-idp')
@@ -57,7 +54,7 @@ export class DevIdpController {
   authorize(@Query() query: unknown, @Res() reply: FastifyReply) {
     const params = AuthorizeParams.parse(query);
     const error = this.idp.validateAuthorizeRequest(params);
-    void reply.header('content-security-policy', PAGE_CSP).type('text/html; charset=utf-8');
+    void reply.header('content-security-policy', this.idp.pageCsp).type('text/html; charset=utf-8');
     if (error) return reply.status(400).send(renderError(error));
     return reply.send(renderAuthorizePage(this.idp.issuer, params, DEMO_USERS));
   }
@@ -69,7 +66,7 @@ export class DevIdpController {
     if (error) {
       return reply
         .status(400)
-        .header('content-security-policy', PAGE_CSP)
+        .header('content-security-policy', this.idp.pageCsp)
         .type('text/html')
         .send(renderError(error));
     }
@@ -87,7 +84,7 @@ export class DevIdpController {
     if (!identity) {
       return reply
         .status(400)
-        .header('content-security-policy', PAGE_CSP)
+        .header('content-security-policy', this.idp.pageCsp)
         .type('text/html')
         .send(renderError('Pick a user'));
     }

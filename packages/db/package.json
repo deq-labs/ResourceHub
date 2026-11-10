@@ -26,7 +26,8 @@
     "db:check-rls": "node --env-file-if-exists=../../.env dist/cli.js check-rls",
     "db:explain": "node --env-file-if-exists=../../.env dist/cli.js explain",
     "db:perf-seed": "node --env-file-if-exists=../../.env dist/cli.js perf-seed",
-    "db:perf-clean": "node --env-file-if-exists=../../.env dist/cli.js perf-clean"
+    "db:perf-clean": "node --env-file-if-exists=../../.env dist/cli.js perf-clean",
+    "db:map-domain": "node --env-file-if-exists=../../.env dist/cli.js map-domain"
   },
   "devDependencies": {
     "@resourcehub/config": "workspace:*",

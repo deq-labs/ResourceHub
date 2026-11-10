@@ -25,6 +25,11 @@ const ConfigSchema = z.object({
     .transform((v) => v === 'true'),
   /** When set, requests must carry this X-Azure-FDID header (i.e. came through our Front Door). */
   FRONT_DOOR_ID: z.string().optional(),
+  /**
+   * When set, requests must carry it in `X-Edge-Secret`. The provider-neutral version of
+   * FRONT_DOOR_ID, for edges that stamp a shared secret (e.g. a Vercel rewrite header transform).
+   */
+  EDGE_SECRET: z.string().min(32).optional(),
   TENANT_HOST_CACHE_TTL_SECONDS: z.coerce.number().int().default(300),
 
   // ---- Auth -------------------------------------------------------------------------------
@@ -36,6 +41,19 @@ const ConfigSchema = z.object({
   /** Optional: confidential client secret (Key Vault in Azure). PKCE is always used. */
   OIDC_CLIENT_SECRET: z.string().optional(),
   OIDC_SCOPES: z.string().default('openid profile email'),
+  /**
+   * Hosted demo only: extra hostnames (comma-separated) the dev IdP may redirect back to over
+   * https, in addition to *.localhost. Requires ALLOW_DEV_IDP_IN_PRODUCTION in production.
+   */
+  DEV_IDP_REDIRECT_HOSTS: z
+    .string()
+    .default('')
+    .transform((v) =>
+      v
+        .split(',')
+        .map((h) => h.trim().toLowerCase())
+        .filter(Boolean),
+    ),
   /** HS256 key for API-issued access tokens and the short-lived OIDC state cookie. */
   AUTH_JWT_SECRET: z.string().min(32).default('local-dev-only-secret-change-me-0123456789'),
   ACCESS_TOKEN_TTL_SECONDS: z.coerce.number().int().default(900),
