@@ -317,7 +317,7 @@ describe('A cannot see, change or count B through any endpoint', () => {
     const covered = new Set(cases.map((c) => `${c.method} ${c.route}`));
     const missing: string[] = [];
     for (const [path, ops] of Object.entries(doc.paths)) {
-      for (const method of Object.keys(ops as object)) {
+      for (const method of Object.keys(ops)) {
         const key = `${method.toUpperCase()} ${path}`;
         if (!covered.has(key) && !NOT_TENANT_DATA.has(key)) missing.push(key);
       }
