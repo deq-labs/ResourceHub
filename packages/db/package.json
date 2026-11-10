@@ -7,6 +7,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./testing": {
+      "types": "./dist/testing.d.ts",
+      "default": "./dist/testing.js"
     }
   },
   "scripts": {
@@ -14,14 +18,31 @@
     "dev": "tsc -p tsconfig.build.json --watch --preserveWatchOutput",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --passWithNoTests --project unit",
+    "test:integration": "vitest run --project integration",
+    "db:generate": "pnpm build && drizzle-kit generate",
+    "db:migrate": "node --env-file-if-exists=../../.env dist/cli.js migrate",
+    "db:seed": "node --env-file-if-exists=../../.env dist/cli.js seed",
+    "db:check-rls": "node --env-file-if-exists=../../.env dist/cli.js check-rls"
   },
   "devDependencies": {
     "@resourcehub/config": "workspace:*",
     "@swc/core": "^1.16.22",
+    "@testcontainers/postgresql": "^11.14.0",
     "@types/node": "^22.20.5",
+    "@types/pg": "^8.23.1",
+    "drizzle-kit": "^0.31.11",
+    "testcontainers": "^11.14.0",
     "typescript": "~5.9.3",
     "unplugin-swc": "^1.6.0",
     "vitest": "^3.2.7"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.44.7",
+    "pg": "^8.23.1",
+    "uuid": "^11.1.1"
+  },
+  "bin": {
+    "resourcehub-db": "./dist/cli.js"
   }
 }
