@@ -1,8 +1,8 @@
 import 'reflect-metadata';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
-import { createApp } from '../src/app.factory.js';
-import { loadConfig } from '../src/config.js';
+import { createApp } from '../../src/app.factory.js';
+import { loadConfig } from '../../src/config.js';
 
 describe('GET /api/v1/health', () => {
   let app: NestFastifyApplication;

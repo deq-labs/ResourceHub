@@ -27,3 +27,52 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm format:check
       - run: pnpm turbo build lint typecheck test
+
+  isolation:
+    name: Tenant isolation + integration tests (Testcontainers)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm turbo build
+      - run: pnpm test:integration
+
+  rls-coverage:
+    name: Migrate as resourcehub_migrator + RLS coverage check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 3s --health-timeout 3s --health-retries 20
+    env:
+      PGPASSWORD: postgres
+      DATABASE_URL_MIGRATOR: postgres://resourcehub_migrator:migrator_dev_pw@localhost:5432/resourcehub
+      DATABASE_URL_PLATFORM: postgres://resourcehub_platform:platform_dev_pw@localhost:5432/resourcehub
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm turbo build --filter=@resourcehub/db...
+      - name: Create roles and database
+        run: |
+          psql -h localhost -U postgres -v ON_ERROR_STOP=1 -d postgres -f packages/db/sql/00-roles.sql
+          psql -h localhost -U postgres -v ON_ERROR_STOP=1 -d resourcehub -f packages/db/sql/01-database.sql
+      - run: pnpm db:migrate
+      - run: pnpm db:check-rls
+      - name: Seed runs cleanly as the platform role
+        run: pnpm db:seed

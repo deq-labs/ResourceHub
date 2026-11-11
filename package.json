@@ -1,6 +1,7 @@
 {
   "name": "resourcehub",
   "private": true,
+  "type": "module",
   "description": "ResourceHub: a secure multi-tenant resource portal (TypeScript, NestJS, React, PostgreSQL RLS, Azure).",
   "packageManager": "pnpm@12.16.1",
   "engines": {
@@ -15,7 +16,13 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "infra:up": "docker compose up -d --wait",
-    "infra:down": "docker compose down"
+    "infra:down": "docker compose down",
+    "test:integration": "turbo run test:integration --concurrency=1",
+    "db:migrate": "pnpm --filter @resourcehub/db db:migrate",
+    "db:seed": "pnpm --filter @resourcehub/db db:seed",
+    "db:check-rls": "pnpm --filter @resourcehub/db db:check-rls",
+    "db:generate": "pnpm --filter @resourcehub/db db:generate",
+    "db:reset": "docker compose rm -sfv postgres && docker volume rm -f resourcehub_pgdata && docker compose up -d --wait postgres && pnpm db:migrate && pnpm db:seed"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.0",
