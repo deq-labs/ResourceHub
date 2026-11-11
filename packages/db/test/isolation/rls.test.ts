@@ -54,7 +54,15 @@ describe('RLS coverage', () => {
 });
 
 describe('raw queries as resourcehub_app with no tenant set', () => {
-  for (const table of ['tenants', 'tenant_domains', 'memberships', 'users']) {
+  for (const table of [
+    'tenants',
+    'tenant_domains',
+    'memberships',
+    'users',
+    'sessions',
+    'invitations',
+    'audit_log',
+  ]) {
     it(`${table} returns zero rows`, async () => {
       const { rows } = await rawAsApp<{ n: number }>(`SELECT count(*)::int AS n FROM ${table}`);
       expect(rows[0]?.n).toBe(0);
@@ -218,5 +226,56 @@ describe('app_resolve_tenant()', () => {
   it('is the only cross-tenant path: the app role cannot read tenants directly', async () => {
     const { rows } = await rawAsApp('SELECT slug FROM tenants');
     expect(rows).toEqual([]);
+  });
+});
+
+describe('audit_log is append-only', () => {
+  it('the app role can insert and read its own tenant rows, but cannot update or delete', async () => {
+    await asTenant(A.id, () =>
+      db.withTenantTx((tx) =>
+        tx.insert(schema.auditLog).values({ tenantId: A.id, action: 'test.event' }),
+      ),
+    );
+    const mine = await asTenant(A.id, () =>
+      db.withTenantTx((tx) => tx.select().from(schema.auditLog)),
+    );
+    expect(mine.some((r) => r.action === 'test.event')).toBe(true);
+    const theirs = await asTenant(B.id, () =>
+      db.withTenantTx((tx) => tx.select().from(schema.auditLog)),
+    );
+    expect(theirs.some((r) => r.action === 'test.event')).toBe(false);
+
+    const err = await asTenant(A.id, () =>
+      db.withTenantTx((tx) => tx.update(schema.auditLog).set({ action: 'tampered' })),
+    ).catch((e: unknown) => e);
+    expect((err as { cause?: { code?: string } }).cause?.code).toBe('42501');
+  });
+
+  it('even the platform role cannot rewrite history', async () => {
+    const err = await db
+      .withPlatformTx({ actorId: null, action: 'test.tamper' }, (tx) =>
+        tx.delete(schema.auditLog).where(eq(schema.auditLog.action, 'test.event')),
+      )
+      .catch((e: unknown) => e);
+    expect(String((err as { cause?: Error }).cause?.message)).toMatch(/append-only/);
+  });
+});
+
+describe('login lookups', () => {
+  it('app_user_memberships lists every tenant for a multi-tenant user without a tenant context', async () => {
+    const sam = DEMO_USERS.find((u) => u.oid === 'dev-sam')!;
+    const { rows } = await rawAsApp<{ slug: string; role: string }>(
+      'SELECT slug, role FROM app_user_memberships($1)',
+      [sam.id],
+    );
+    expect(rows).toEqual([
+      { slug: 'contoso', role: 'viewer' },
+      { slug: 'northwind', role: 'admin' },
+    ]);
+  });
+
+  it('platform_sessions are invisible to the app role', async () => {
+    const res = await rawAsApp('SELECT * FROM platform_sessions').catch((e: unknown) => e);
+    expect((res as { code?: string }).code).toBe('42501');
   });
 });

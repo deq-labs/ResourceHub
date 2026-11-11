@@ -24,14 +24,56 @@ const ConfigSchema = z.object({
     .default('false')
     .transform((v) => v === 'true'),
   TENANT_HOST_CACHE_TTL_SECONDS: z.coerce.number().int().default(300),
+
+  // ---- Auth -------------------------------------------------------------------------------
+  /** `dev`: built-in mock OIDC provider ("sign in as"). `entra`: Microsoft Entra External ID. */
+  AUTH_PROVIDER: z.enum(['dev', 'entra']).default('dev'),
+  /** OIDC issuer. For Entra External ID: https://{tenant}.ciamlogin.com/{tenantId}/v2.0 */
+  OIDC_ISSUER: z.string().default('http://localhost:3000/api/v1/dev-idp'),
+  OIDC_CLIENT_ID: z.string().default('resourcehub-local'),
+  /** Optional: confidential client secret (Key Vault in Azure). PKCE is always used. */
+  OIDC_CLIENT_SECRET: z.string().optional(),
+  OIDC_SCOPES: z.string().default('openid profile email'),
+  /** HS256 key for API-issued access tokens and the short-lived OIDC state cookie. */
+  AUTH_JWT_SECRET: z.string().min(32).default('local-dev-only-secret-change-me-0123456789'),
+  ACCESS_TOKEN_TTL_SECONDS: z.coerce.number().int().default(900),
+  REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().default(14),
+  /** Secure cookies need https; locally the SPA is served over http on *.localhost. */
+  COOKIE_SECURE: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((v) => v === 'true'),
+  /** Scheme used to build absolute callback URLs (https behind Front Door). */
+  PUBLIC_SCHEME: z.enum(['http', 'https']).default('http'),
+
+  // ---- Email ------------------------------------------------------------------------------
+  SMTP_URL: z.string().default('smtp://localhost:1025'),
+  MAIL_FROM: z.string().default('ResourceHub <no-reply@resourcehub.local>'),
+
+  // ---- Abuse protection -------------------------------------------------------------------
+  RATE_LIMIT_PER_IP_PER_MINUTE: z.coerce.number().int().default(600),
+  RATE_LIMIT_PER_TENANT_PER_MINUTE: z.coerce.number().int().default(6000),
+  /** Sign-in, refresh and invitation endpoints get a much tighter per-IP budget. */
+  RATE_LIMIT_AUTH_PER_MINUTE: z.coerce.number().int().default(30),
 });
 
 export type AppConfig = z.infer<typeof ConfigSchema>;
+
+const DEV_SECRET_PREFIX = 'local-dev-only';
 
 export function loadConfig(env: Record<string, string | undefined> = process.env): AppConfig {
   const parsed = ConfigSchema.safeParse(env);
   if (!parsed.success) {
     throw new Error(`Invalid configuration:\n${z.prettifyError(parsed.error)}`);
   }
-  return parsed.data;
+  const config = parsed.data;
+  if (config.NODE_ENV === 'production') {
+    if (config.AUTH_JWT_SECRET.startsWith(DEV_SECRET_PREFIX)) {
+      throw new Error('AUTH_JWT_SECRET must be set (from Key Vault) in production');
+    }
+    if (config.AUTH_PROVIDER === 'dev' && process.env.ALLOW_DEV_IDP_IN_PRODUCTION !== 'true') {
+      throw new Error('AUTH_PROVIDER=dev is not allowed in production');
+    }
+  }
+  return config;
 }

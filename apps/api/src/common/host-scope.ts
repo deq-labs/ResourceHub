@@ -3,7 +3,8 @@ import { Reflector } from '@nestjs/core';
 import type { FastifyRequest } from 'fastify';
 import { problems } from './problem.js';
 
-export type HostScope = 'tenant' | 'platform' | 'any';
+/** `site` = a tenant host or the platform host (auth endpoints). */
+export type HostScope = 'tenant' | 'platform' | 'site' | 'any';
 export const HOST_SCOPE = 'resourcehub:host-scope';
 
 /** Routes default to `tenant`. Use `platform` for the admin host, `any` for health checks. */
@@ -26,6 +27,7 @@ export class HostScopeGuard implements CanActivate {
     if (scope === 'any') return true;
 
     const { site } = context.switchToHttp().getRequest<FastifyRequest>();
+    if (scope === 'site' && site.kind === 'platform') return true;
     if (scope === 'platform') {
       if (site.kind !== 'platform') throw problems.notFound();
       return true;

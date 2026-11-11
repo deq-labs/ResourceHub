@@ -13,6 +13,12 @@ export interface PlatformAuditEntry {
   actorId: string | null;
   action: string;
   reason?: string;
+  /** Tenant the action touches, if any (NULL = platform-level event). */
+  tenantId?: string | null;
+  entity?: string;
+  entityId?: string;
+  diff?: Record<string, unknown>;
+  ip?: string | null;
 }
 
 export type PlatformAuditSink = (tx: Tx, entry: PlatformAuditEntry) => Promise<void>;
