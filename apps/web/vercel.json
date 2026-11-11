@@ -6,7 +6,7 @@
   "outputDirectory": "dist",
   "routes": [
     {
-      "src": "/(.*)",
+      "src": "/((?!api/).*)",
       "continue": true,
       "headers": {
         "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://*.blob.core.windows.net; connect-src 'self' https://*.blob.core.windows.net; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",

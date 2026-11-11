@@ -149,6 +149,14 @@ tenant resolution (each tenant gets its own `*.vercel.app` alias), and an API th
 traffic carrying the edge's shared secret. Setup notes for your own accounts go in a gitignored
 `*.local.md` file.
 
+**Rehearse the free deployment locally** before creating any accounts. This runs the real
+production image, a Neon-shaped Postgres and a Vercel stand-in that applies `apps/web/vercel.json`:
+
+```bash
+pnpm build && pnpm sim:free   # then open http://contoso.localhost:8080 (northwind. and admin. too)
+pnpm sim:free:down            # stop and wipe it
+```
+
 ---
 
 ## Repository layout
