@@ -60,6 +60,7 @@ beforeAll(async () => {
         })
         .returning();
       Object.assign(bIds, {
+        bUser: '01960000-0000-7000-8000-0000000000b2',
         resource: res!.id,
         resourceSlug: res!.slug,
         category: cat!.id,
@@ -126,6 +127,21 @@ const cases: Case[] = [
     method: 'GET',
     route: '/api/v1/files/{id}/download',
     url: () => `/api/v1/files/${bIds.file}/download`,
+    expect: [404],
+  },
+  { method: 'GET', route: '/api/v1/members', url: () => '/api/v1/members', expect: [200] },
+  { method: 'GET', route: '/api/v1/audit', url: () => '/api/v1/audit?limit=100', expect: [200] },
+  {
+    method: 'PATCH',
+    route: '/api/v1/members/{userId}',
+    url: () => `/api/v1/members/${bIds.bUser}`,
+    body: () => ({ role: 'viewer' }),
+    expect: [404],
+  },
+  {
+    method: 'DELETE',
+    route: '/api/v1/members/{userId}',
+    url: () => `/api/v1/members/${bIds.bUser}`,
     expect: [404],
   },
   // writes against B's ids
@@ -265,6 +281,14 @@ const NOT_TENANT_DATA = new Set([
   'POST /api/v1/auth/logout',
   'GET /api/v1/invitations/preview', // auth-isolation.test.ts
   'POST /api/v1/invitations/accept', // auth-isolation.test.ts
+  'GET /api/v1/auth/impersonate', // admin.test.ts: ticket bound to one tenant, single use
+  // Platform console: admin host + platform token only (admin.test.ts). Never reachable on a tenant host.
+  'GET /api/v1/platform/tenants',
+  'POST /api/v1/platform/tenants',
+  'PATCH /api/v1/platform/tenants/{id}',
+  'GET /api/v1/platform/tenants/{id}/members',
+  'POST /api/v1/platform/impersonations',
+  'GET /api/v1/platform/audit',
 ]);
 
 describe('A cannot see, change or count B through any endpoint', () => {

@@ -36,5 +36,19 @@ export {
   type DemoTenantKey,
   type DemoUser,
 } from './seed/demo-data.js';
-export { sql, eq, and, or, desc, asc, gt, lt, ilike, inArray, isNull, count } from 'drizzle-orm';
+export {
+  sql,
+  eq,
+  and,
+  or,
+  desc,
+  asc,
+  gt,
+  lt,
+  like,
+  ilike,
+  inArray,
+  isNull,
+  count,
+} from 'drizzle-orm';
 export type { SQL } from 'drizzle-orm';

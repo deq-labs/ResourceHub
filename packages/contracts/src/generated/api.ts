@@ -84,6 +84,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/impersonate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AuthController_impersonate"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/logout": {
         parameters: {
             query?: never;
@@ -415,6 +431,134 @@ export interface paths {
         put?: never;
         post?: never;
         delete: operations["DomainsController_remove"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminController_members"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/members/{userId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["AdminController_removeMember"];
+        options?: never;
+        head?: never;
+        patch: operations["AdminController_updateMember"];
+        trace?: never;
+    };
+    "/api/v1/audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminController_auditLog"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/tenants": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["PlatformController_list"];
+        put?: never;
+        post: operations["PlatformController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/tenants/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["PlatformController_update"];
+        trace?: never;
+    };
+    "/api/v1/platform/tenants/{id}/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["PlatformController_members"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/impersonations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["PlatformController_impersonate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["PlatformController_audit"];
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -827,6 +971,187 @@ export interface components {
                 value: string;
             };
         };
+        MemberListDto_Output: {
+            data: {
+                /** Format: uuid */
+                userId: string;
+                name: string;
+                email: string;
+                /** @enum {string} */
+                role: "owner" | "admin" | "editor" | "viewer";
+                /** Format: date-time */
+                joinedAt: string;
+                /** Format: date-time */
+                lastLoginAt: string | null;
+            }[];
+        };
+        UpdateMemberDto: {
+            /** @enum {string} */
+            role: "owner" | "admin" | "editor" | "viewer";
+        };
+        MemberDto_Output: {
+            /** Format: uuid */
+            userId: string;
+            name: string;
+            email: string;
+            /** @enum {string} */
+            role: "owner" | "admin" | "editor" | "viewer";
+            /** Format: date-time */
+            joinedAt: string;
+            /** Format: date-time */
+            lastLoginAt: string | null;
+        };
+        AuditPageDto_Output: {
+            data: {
+                /** Format: uuid */
+                id: string;
+                action: string;
+                entity: string | null;
+                entityId: string | null;
+                actor: {
+                    id: string;
+                    name: string | null;
+                } | null;
+                impersonator: {
+                    id: string;
+                } | null;
+                diff: {
+                    [key: string]: unknown;
+                } | null;
+                ip: string | null;
+                /** Format: date-time */
+                createdAt: string;
+            }[];
+            nextCursor: string | null;
+        };
+        TenantListDto_Output: {
+            data: {
+                /** Format: uuid */
+                id: string;
+                slug: string;
+                name: string;
+                /** @enum {string} */
+                status: "active" | "suspended";
+                /** @enum {string} */
+                plan: "free" | "pro" | "enterprise";
+                /** Format: date-time */
+                createdAt: string;
+                memberCount: number;
+                resourceCount: number;
+                domains: {
+                    hostname: string;
+                    verified: boolean;
+                }[];
+            }[];
+        };
+        CreateTenantDto: {
+            slug: string;
+            name: string;
+            /**
+             * @default free
+             * @enum {string}
+             */
+            plan: "free" | "pro" | "enterprise";
+            /** Format: email */
+            ownerEmail: string;
+        };
+        CreatedTenantDto_Output: {
+            tenant: {
+                /** Format: uuid */
+                id: string;
+                slug: string;
+                name: string;
+                /** @enum {string} */
+                status: "active" | "suspended";
+                /** @enum {string} */
+                plan: "free" | "pro" | "enterprise";
+                /** Format: date-time */
+                createdAt: string;
+                memberCount: number;
+                resourceCount: number;
+                domains: {
+                    hostname: string;
+                    verified: boolean;
+                }[];
+            };
+            url: string;
+            ownerInviteUrl: string;
+        };
+        UpdateTenantDto: {
+            name?: string;
+            /** @enum {string} */
+            status?: "active" | "suspended";
+            /** @enum {string} */
+            plan?: "free" | "pro" | "enterprise";
+        };
+        TenantPlatformDto_Output: {
+            /** Format: uuid */
+            id: string;
+            slug: string;
+            name: string;
+            /** @enum {string} */
+            status: "active" | "suspended";
+            /** @enum {string} */
+            plan: "free" | "pro" | "enterprise";
+            /** Format: date-time */
+            createdAt: string;
+            memberCount: number;
+            resourceCount: number;
+            domains: {
+                hostname: string;
+                verified: boolean;
+            }[];
+        };
+        MembersDto_Output: {
+            data: {
+                /** Format: uuid */
+                userId: string;
+                name: string;
+                email: string;
+                /** @enum {string} */
+                role: "owner" | "admin" | "editor" | "viewer";
+            }[];
+        };
+        StartImpersonationDto: {
+            /** Format: uuid */
+            tenantId: string;
+            /** Format: uuid */
+            userId: string;
+            reason: string;
+        };
+        TicketDto_Output: {
+            url: string;
+            /** Format: date-time */
+            expiresAt: string;
+        };
+        PlatformAuditDto_Output: {
+            data: {
+                /** Format: uuid */
+                id: string;
+                action: string;
+                entity: string | null;
+                entityId: string | null;
+                actor: {
+                    id: string;
+                    name: string | null;
+                } | null;
+                impersonator: {
+                    id: string;
+                } | null;
+                diff: {
+                    [key: string]: unknown;
+                } | null;
+                ip: string | null;
+                /** Format: date-time */
+                createdAt: string;
+                tenant: {
+                    /** Format: uuid */
+                    id: string;
+                    slug: string;
+                } | null;
+            }[];
+            nextCursor: string | null;
+        };
     };
     responses: never;
     parameters: never;
@@ -924,6 +1249,23 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["SessionResponseDto_Output"];
                 };
+            };
+        };
+    };
+    AuthController_impersonate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -1576,6 +1918,232 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    AdminController_members: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberListDto_Output"];
+                };
+            };
+        };
+    };
+    AdminController_removeMember: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminController_updateMember: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateMemberDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberDto_Output"];
+                };
+            };
+        };
+    };
+    AdminController_auditLog: {
+        parameters: {
+            query?: {
+                cursor?: string;
+                limit?: number;
+                "filter[action]"?: string;
+                "filter[actor]"?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditPageDto_Output"];
+                };
+            };
+        };
+    };
+    PlatformController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenantListDto_Output"];
+                };
+            };
+        };
+    };
+    PlatformController_create: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description 8-128 chars [A-Za-z0-9_-] */
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateTenantDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreatedTenantDto_Output"];
+                };
+            };
+        };
+    };
+    PlatformController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateTenantDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenantPlatformDto_Output"];
+                };
+            };
+        };
+    };
+    PlatformController_members: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MembersDto_Output"];
+                };
+            };
+        };
+    };
+    PlatformController_impersonate: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description 8-128 chars [A-Za-z0-9_-] */
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StartImpersonationDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketDto_Output"];
+                };
+            };
+        };
+    };
+    PlatformController_audit: {
+        parameters: {
+            query?: {
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlatformAuditDto_Output"];
+                };
             };
         };
     };
