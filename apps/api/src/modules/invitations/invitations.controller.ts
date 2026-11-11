@@ -47,7 +47,7 @@ export class InvitationsController {
 
   @Get()
   @Roles('admin')
-  @ZodResponse({ type: InvitationListDto })
+  @ZodResponse({ status: 200, type: InvitationListDto })
   async list() {
     return { data: await this.invitations.list() };
   }
@@ -71,7 +71,7 @@ export class InvitationsController {
   @Get('preview')
   @Public()
   @RouteConfig(strict)
-  @ZodResponse({ type: InvitationPreviewDto })
+  @ZodResponse({ status: 200, type: InvitationPreviewDto })
   preview(@Req() req: FastifyRequest, @Query() query: PreviewQueryDto) {
     return this.invitations.preview(tenantOf(req), query.token, req.ip);
   }
@@ -80,7 +80,7 @@ export class InvitationsController {
   @AllowNonMember()
   @RouteConfig(strict)
   @HttpCode(200)
-  @ZodResponse({ type: AcceptedDto })
+  @ZodResponse({ status: 200, type: AcceptedDto })
   accept(@Req() req: FastifyRequest, @Body() body: AcceptInvitationDto) {
     return this.invitations.accept(tenantOf(req), req.auth!, actorFrom(req), body.token);
   }

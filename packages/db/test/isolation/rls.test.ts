@@ -279,3 +279,53 @@ describe('login lookups', () => {
     expect((res as { code?: string }).code).toBe('42501');
   });
 });
+
+describe('composite foreign keys block cross-tenant references', () => {
+  it("tenant A cannot attach tenant B's category to its resource", async () => {
+    const [bCategory] = await db.withPlatformTx({ actorId: null, action: 'test.read' }, (tx) =>
+      tx.select().from(schema.categories).where(eq(schema.categories.tenantId, B.id)).limit(1),
+    );
+    const err = await asTenant(A.id, () =>
+      db.withTenantTx((tx) =>
+        tx.insert(schema.resources).values({
+          tenantId: A.id,
+          title: 'Sneaky',
+          slug: 'sneaky',
+          body: { format: 'markdown', content: '' },
+          categoryId: bCategory!.id,
+        }),
+      ),
+    ).catch((e: unknown) => e);
+    // 23503 = foreign_key_violation: (tenant_id=A, category_id=B's) doesn't exist.
+    expect((err as { cause?: { code?: string } }).cause?.code).toBe('23503');
+  });
+
+  it('a file path must live under its own tenant prefix', async () => {
+    const err = await asTenant(A.id, () =>
+      db.withTenantTx((tx) =>
+        tx.insert(schema.files).values({
+          tenantId: A.id,
+          blobPath: `tenants/${B.id}/files/x.pdf`,
+          filename: 'x.pdf',
+          mime: 'application/pdf',
+          size: 1,
+        }),
+      ),
+    ).catch((e: unknown) => e);
+    expect((err as { cause?: { code?: string } }).cause?.code).toBe('23514');
+  });
+
+  it('every hub table returns zero rows without a tenant set', async () => {
+    for (const t of [
+      'categories',
+      'tags',
+      'resources',
+      'resource_tags',
+      'files',
+      'tenant_branding',
+    ]) {
+      const { rows } = await rawAsApp<{ n: number }>(`SELECT count(*)::int AS n FROM ${t}`);
+      expect(rows[0]?.n, t).toBe(0);
+    }
+  });
+});

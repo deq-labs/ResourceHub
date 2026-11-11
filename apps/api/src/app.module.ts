@@ -9,6 +9,7 @@ import { TenantsModule } from './modules/tenants/tenants.module.js';
 import { AuditModule } from './modules/audit/audit.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { DevIdpModule } from './modules/dev-idp/dev-idp.module.js';
+import { HubModule } from './modules/hub.module.js';
 import { AuthGuard } from './common/auth.guard.js';
 import { HostScopeGuard } from './common/host-scope.js';
 import { ProblemDetailsFilter } from './common/problem.js';
@@ -27,6 +28,7 @@ export class AppModule {
         AuditModule,
         TenantsModule,
         AuthModule,
+        HubModule,
         ...(config.AUTH_PROVIDER === 'dev' ? [DevIdpModule] : []),
       ],
       controllers: [HealthController],

@@ -15,6 +15,13 @@
       "when": 1794344653811,
       "tag": "0001_auth_audit",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794345479051,
+      "tag": "0002_hub",
+      "breakpoints": true
     }
   ]
 }

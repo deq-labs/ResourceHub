@@ -3,6 +3,7 @@ import { inject } from 'vitest';
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import { createApp } from '../src/app.factory.js';
 import { loadConfig, type AppConfig } from '../src/config.js';
+import { StorageService } from '../src/infra/storage.service.js';
 
 export const HOSTS = {
   contoso: 'contoso.localhost',
@@ -19,6 +20,7 @@ export function testConfig(overrides: Record<string, string> = {}): AppConfig {
     DATABASE_URL_APP: db.app,
     DATABASE_URL_PLATFORM: db.platform,
     REDIS_URL: inject('redisUrl'),
+    STORAGE_CONNECTION_STRING: inject('storageConnectionString'),
     DB_POOL_MAX: '4',
     ...overrides,
   });
@@ -26,6 +28,7 @@ export function testConfig(overrides: Record<string, string> = {}): AppConfig {
 
 export async function createTestApp(overrides: Record<string, string> = {}) {
   const app = await createApp(testConfig(overrides));
+  await app.get(StorageService).ensureReady();
   await app.getHttpAdapter().getInstance().ready();
   return app;
 }
