@@ -8,16 +8,29 @@
     "dev": "concurrently -k -n tsc,node \"tsc -p tsconfig.build.json --watch --preserveWatchOutput\" \"node --watch --enable-source-maps --env-file-if-exists=../../.env dist/main.js\"",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "test": "vitest run --passWithNoTests",
-    "start": "node --enable-source-maps dist/main.js"
+    "test": "vitest run --passWithNoTests --project unit",
+    "start": "node --enable-source-maps dist/main.js",
+    "test:integration": "vitest run --project integration"
   },
   "devDependencies": {
     "@resourcehub/config": "workspace:*",
     "@swc/core": "^1.16.22",
+    "@testcontainers/postgresql": "^11.14.0",
+    "@testcontainers/redis": "^11.14.0",
     "@types/node": "^22.20.5",
+    "@types/nodemailer": "^7.0.12",
     "concurrently": "^9.2.5",
+    "testcontainers": "^11.14.0",
     "typescript": "~5.9.3",
     "unplugin-swc": "^1.6.0",
     "vitest": "^3.2.7"
+  },
+  "dependencies": {
+    "@resourcehub/db": "workspace:*",
+    "@resourcehub/integrations": "workspace:*",
+    "bullmq": "^5.81.5",
+    "ioredis": "^5.11.1",
+    "nodemailer": "^7.0.13",
+    "zod": "^4.6.7"
   }
 }

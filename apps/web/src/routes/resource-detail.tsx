@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { Badge, buttonVariants, Card, EmptyState, PageSpinner, STATUS_TONE } from '@/components/ui';
 import { api, ApiError, errorMessage, unwrap } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { SendToPartner } from '@/components/SendToPartner';
 import { renderMarkdown } from '@/lib/markdown';
 import { resourceQuery } from '@/lib/queries';
 import { formatBytes, formatDate } from '@/lib/utils';
@@ -154,6 +155,7 @@ export function ResourceDetailPage({ slug }: { slug: string }) {
               View in {r.source.system} <ExternalLink className="size-3.5" />
             </a>
           )}
+          {can('admin') && r.status === 'published' && <SendToPartner resourceId={r.id} />}
         </aside>
       </div>
     </div>

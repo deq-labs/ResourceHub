@@ -1,6 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import nodemailer, { type Transporter } from 'nodemailer';
 import { APP_CONFIG } from '../tokens.js';
+import { QueueService } from './queue.service.js';
 import type { AppConfig } from '../config.js';
 
 export interface OutgoingMail {
@@ -16,12 +17,20 @@ export class MailService {
   private readonly logger = new Logger(MailService.name);
   private readonly transport: Transporter;
 
-  constructor(@Inject(APP_CONFIG) private readonly config: AppConfig) {
+  constructor(
+    @Inject(APP_CONFIG) private readonly config: AppConfig,
+    private readonly queue: QueueService,
+  ) {
     this.transport = nodemailer.createTransport(config.SMTP_URL);
   }
 
-  async send(mail: OutgoingMail): Promise<boolean> {
+  async send(mail: OutgoingMail, tenantId: string | null = null): Promise<boolean> {
     try {
+      if (this.config.MAIL_TRANSPORT === 'queue') {
+        // Delivered by the worker with retries; the request never waits on SMTP.
+        await this.queue.enqueueEmail({ tenantId, ...mail });
+        return true;
+      }
       await this.transport.sendMail({ from: this.config.MAIL_FROM, ...mail });
       return true;
     } catch (err) {

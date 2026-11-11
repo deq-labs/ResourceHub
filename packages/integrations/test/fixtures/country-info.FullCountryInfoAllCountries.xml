@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <m:FullCountryInfoAllCountriesResponse xmlns:m="http://www.oorsprong.org/websamples.countryinfo">
+      <m:FullCountryInfoAllCountriesResult>
+<m:tCountryInfo>
+          <m:sISOCode>BR</m:sISOCode>
+          <m:sName>Brazil</m:sName>
+          <m:sCapitalCity>Brasilia</m:sCapitalCity>
+          <m:sPhoneCode>55</m:sPhoneCode>
+          <m:sContinentCode>AM</m:sContinentCode>
+          <m:sCurrencyISOCode>BRL</m:sCurrencyISOCode>
+          <m:sCountryFlag>http://www.oorsprong.org/WebSamples.CountryInfo/Flags/Brazil.jpg</m:sCountryFlag>
+          <m:Languages>
+            <m:tLanguage>
+              <m:sISOCode>por</m:sISOCode>
+              <m:sName>Portuguese</m:sName>
+            </m:tLanguage>
+          </m:Languages>
+        </m:tCountryInfo>
+<m:tCountryInfo>
+          <m:sISOCode>JP</m:sISOCode>
+          <m:sName>Japan</m:sName>
+          <m:sCapitalCity>Tokyo</m:sCapitalCity>
+          <m:sPhoneCode>81</m:sPhoneCode>
+          <m:sContinentCode>AS</m:sContinentCode>
+          <m:sCurrencyISOCode>JPY</m:sCurrencyISOCode>
+          <m:sCountryFlag>http://www.oorsprong.org/WebSamples.CountryInfo/Flags/Japan.jpg</m:sCountryFlag>
+          <m:Languages>
+            <m:tLanguage>
+              <m:sISOCode>jpn</m:sISOCode>
+              <m:sName>Japanese</m:sName>
+            </m:tLanguage>
+          </m:Languages>
+        </m:tCountryInfo>
+<m:tCountryInfo>
+          <m:sISOCode>NL</m:sISOCode>
+          <m:sName>Netherlands</m:sName>
+          <m:sCapitalCity>Amsterdam</m:sCapitalCity>
+          <m:sPhoneCode>31</m:sPhoneCode>
+          <m:sContinentCode>EU</m:sContinentCode>
+          <m:sCurrencyISOCode>EUR</m:sCurrencyISOCode>
+          <m:sCountryFlag>http://www.oorsprong.org/WebSamples.CountryInfo/Flags/Netherlands.jpg</m:sCountryFlag>
+          <m:Languages>
+            <m:tLanguage>
+              <m:sISOCode>fry</m:sISOCode>
+              <m:sName>Frisian</m:sName>
+            </m:tLanguage>
+            <m:tLanguage>
+              <m:sISOCode>nl</m:sISOCode>
+              <m:sName>Dutch</m:sName>
+            </m:tLanguage>
+          </m:Languages>
+        </m:tCountryInfo>
+</m:FullCountryInfoAllCountriesResult>
+    </m:FullCountryInfoAllCountriesResponse>
+  </soap:Body>
+</soap:Envelope>

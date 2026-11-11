@@ -62,6 +62,12 @@ const ConfigSchema = z.object({
 
   // ---- Email ------------------------------------------------------------------------------
   SMTP_URL: z.string().default('smtp://localhost:1025'),
+  /** `queue`: hand mail to the worker via BullMQ (default in the stack). `direct`: send inline. */
+  MAIL_TRANSPORT: z.enum(['queue', 'direct']).default('direct'),
+
+  // ---- Integrations ---------------------------------------------------------------------
+  /** Key Vault for `kv:` secret refs (managed identity). */
+  KEY_VAULT_URL: z.string().optional(),
   MAIL_FROM: z.string().default('ResourceHub <no-reply@resourcehub.local>'),
 
   // ---- Abuse protection -------------------------------------------------------------------
