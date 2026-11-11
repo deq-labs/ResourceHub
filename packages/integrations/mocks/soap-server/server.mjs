@@ -17,13 +17,13 @@ const day = 24 * 60 * 60 * 1000;
 const seed = [
   [
     'PD-1001',
-    'Cold chain handling SOP',
-    'Temperature excursions and the escalation path for refrigerated shipments.',
+    'Lockout/tagout procedure',
+    'Isolating energy sources before maintenance, and who signs off.',
     'Operations',
   ],
   [
     'PD-1002',
-    'Adverse event reporting guide',
+    'Incident reporting guide',
     'What to capture, who to notify and the 24-hour reporting window.',
     'Safety',
   ],
@@ -35,9 +35,9 @@ const seed = [
   ],
   [
     'PD-1004',
-    'Label change notice: 50mg tablets',
-    'Updated storage statement on the outer carton from Q2.',
-    'Regulatory',
+    'Packaging change notice: carton v3',
+    'New carton dimensions and pallet pattern from Q2.',
+    'Quality',
   ],
   [
     'PD-1005',
@@ -48,7 +48,7 @@ const seed = [
   [
     'PD-1006',
     'Data privacy addendum',
-    'How patient-identifiable data is minimised in partner reports.',
+    'How personal data is minimised in partner reports.',
     'Compliance',
   ],
 ];

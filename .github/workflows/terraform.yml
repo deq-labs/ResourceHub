@@ -1,0 +1,51 @@
+name: Terraform
+
+on:
+  pull_request:
+    paths: ['infra/**', '.github/workflows/terraform.yml', '.github/workflows/_deploy.yml']
+
+permissions:
+  contents: read
+  id-token: write
+  pull-requests: write
+
+jobs:
+  validate:
+    name: fmt + validate
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        dir: [modules/resourcehub, envs/dev, envs/prod, bootstrap]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.13.4
+      - run: terraform fmt -check -recursive
+        working-directory: infra/terraform
+      - run: terraform init -backend=false -input=false && terraform validate
+        working-directory: infra/terraform/${{ matrix.dir }}
+
+  plan-dev:
+    name: plan (dev)
+    needs: validate
+    if: vars.AZURE_CLIENT_ID != ''
+    runs-on: ubuntu-latest
+    env:
+      ARM_USE_OIDC: 'true'
+      ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+      ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      TF_VAR_root_domain: ${{ vars.ROOT_DOMAIN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.13.4
+      - working-directory: infra/terraform/envs/dev
+        run: |
+          terraform init -input=false \
+            -backend-config="resource_group_name=${{ vars.TFSTATE_RESOURCE_GROUP }}" \
+            -backend-config="storage_account_name=${{ vars.TFSTATE_STORAGE_ACCOUNT }}" \
+            -backend-config="container_name=${{ vars.TFSTATE_CONTAINER }}"
+          terraform plan -input=false -lock=false -no-color | tee plan.txt

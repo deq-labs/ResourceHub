@@ -1,0 +1,104 @@
+#!/usr/bin/env node
+// Database CLI: `migrate`, `seed`, `check-rls`. Reads connection strings from the environment.
+import { runMigrations } from './migrate.js';
+import { checkRlsCoverage } from './rls-check.js';
+import { seedDemo } from './seed/seed.js';
+import { contentSeedSteps } from './seed/steps.js';
+import { bootstrapRoles } from './bootstrap.js';
+import { explainHotQueries, perfClean, perfSeed } from './perf.js';
+import { addVerifiedDomain } from './domains.js';
+
+const LOCAL = 'postgres://%s@localhost:55432/resourcehub';
+const env = (key: string, fallback: string) => process.env[key] ?? fallback;
+
+const migratorUrl = env(
+  'DATABASE_URL_MIGRATOR',
+  LOCAL.replace('%s', 'resourcehub_migrator:migrator_dev_pw'),
+);
+const platformUrl = env(
+  'DATABASE_URL_PLATFORM',
+  LOCAL.replace('%s', 'resourcehub_platform:platform_dev_pw'),
+);
+
+async function main(): Promise<void> {
+  const cmd = process.argv[2];
+  switch (cmd) {
+    case 'migrate':
+      await runMigrations(migratorUrl);
+      console.log('Migrations applied.');
+      return;
+    case 'seed':
+      await seedDemo(platformUrl, contentSeedSteps);
+      console.log('Demo tenants seeded: contoso, northwind.');
+      return;
+    case 'check-rls': {
+      const violations = await checkRlsCoverage(migratorUrl);
+      if (violations.length > 0) {
+        console.error('RLS coverage check FAILED:');
+        for (const v of violations) console.error(`  - ${v.table}: ${v.problem}`);
+        process.exitCode = 1;
+        return;
+      }
+      console.log('RLS coverage check passed: every table has RLS + FORCE + a policy.');
+      return;
+    }
+    case 'map-domain': {
+      // Operator: attach a pre-verified hostname (e.g. a free *.vercel.app alias) to a tenant.
+      const [slug, hostname] = [process.argv[3], process.argv[4]];
+      if (!slug || !hostname) throw new Error('Usage: map-domain <tenant-slug> <hostname>');
+      await addVerifiedDomain(platformUrl, slug, hostname);
+      console.log(`${hostname} now serves tenant "${slug}".`);
+      return;
+    }
+    case 'perf-seed':
+      await perfSeed(
+        platformUrl,
+        migratorUrl,
+        Number(process.argv[3] ?? 200),
+        Number(process.argv[4] ?? 250),
+      );
+      console.log('Synthetic perf tenants seeded (slug perf-*).');
+      return;
+    case 'perf-clean':
+      await perfClean(platformUrl);
+      console.log('Synthetic perf tenants removed.');
+      return;
+    case 'explain':
+      console.log(
+        await explainHotQueries(
+          env('DATABASE_URL_APP', LOCAL.replace('%s', 'resourcehub_app:app_dev_pw')),
+          process.argv[3] ?? 'contoso',
+        ),
+      );
+      return;
+    case 'bootstrap': {
+      // Cloud only: create/rotate the three roles as the server admin. Values come from Key Vault refs.
+      const need = (k: string) => {
+        const v = process.env[k];
+        if (!v) throw new Error(`${k} is required for bootstrap`);
+        return v;
+      };
+      await bootstrapRoles({
+        adminUrl: need('DATABASE_URL_ADMIN'),
+        database: process.env.DATABASE_NAME ?? 'resourcehub',
+        passwords: {
+          migrator: need('DB_PASSWORD_MIGRATOR'),
+          app: need('DB_PASSWORD_APP'),
+          platform: need('DB_PASSWORD_PLATFORM'),
+        },
+      });
+      console.log('Roles bootstrapped.');
+      return;
+    }
+    default:
+      console.error(
+        'Usage: resourcehub-db <bootstrap|migrate|seed|check-rls|map-domain|perf-seed|perf-clean|explain>',
+      );
+      process.exitCode = 2;
+  }
+}
+
+main().catch((err: unknown) => {
+  console.error(err);
+  process.exitCode = 1;
+});

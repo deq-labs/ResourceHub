@@ -15,3 +15,9 @@ test-results
 *.tfstate.*
 *.tfplan
 .secrets.local.json
+.api-smoke.log
+.terraform.lock.hcl.bak
+**/.terraform/
+
+# Personal deployment notes (e.g. DEPLOY-FREE.local.md): never committed
+*.local.md

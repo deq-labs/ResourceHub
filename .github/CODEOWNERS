@@ -1,0 +1,7 @@
+# Tenant isolation is owned by a human. Agent PRs touching these paths get flagged for review.
+/apps/api/test/isolation/   @deq-labs
+/packages/db/test/isolation/ @deq-labs
+/packages/db/drizzle/        @deq-labs
+/packages/db/sql/            @deq-labs
+/.github/workflows/          @deq-labs
+/infra/                      @deq-labs

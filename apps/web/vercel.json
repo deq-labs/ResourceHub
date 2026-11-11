@@ -1,0 +1,35 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "installCommand": "pnpm install --frozen-lockfile",
+  "buildCommand": "cd ../.. && pnpm turbo run build --filter=@resourcehub/web...",
+  "outputDirectory": "dist",
+  "routes": [
+    {
+      "src": "/((?!api/).*)",
+      "continue": true,
+      "headers": {
+        "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://*.blob.core.windows.net; connect-src 'self' https://*.blob.core.windows.net; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+        "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+        "X-Content-Type-Options": "nosniff",
+        "Referrer-Policy": "strict-origin-when-cross-origin"
+      }
+    },
+    {
+      "src": "/api/(.*)",
+      "dest": "https://REPLACE-WITH-YOUR-API.onrender.com/api/$1",
+      "transforms": [
+        {
+          "type": "request.headers",
+          "op": "set",
+          "target": { "key": "x-edge-secret" },
+          "args": "$EDGE_SECRET",
+          "env": ["EDGE_SECRET"]
+        }
+      ],
+      "headers": { "x-vercel-enable-rewrite-caching": "0", "cache-control": "no-store" }
+    },
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ]
+}
