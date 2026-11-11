@@ -102,16 +102,16 @@ Execution Time: 0.152 ms
 ## full-text search
 
 ```
-Limit (actual time=0.010..0.016 rows=21 loops=1)
+Limit (actual time=0.012..0.019 rows=21 loops=1)
   Buffers: shared hit=7
-  ->  Index Scan Backward using resources_tenant_status_updated_idx on resources r (actual time=0.010..0.015 rows=21 loops=1)
+  ->  Index Scan Backward using resources_tenant_status_updated_idx on resources r (actual time=0.012..0.017 rows=21 loops=1)
         Index Cond: ((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid) AND (status = 'published'::text))
-        Filter: (search @@ '''cold'' & ''chain'''::tsquery)
+        Filter: (search @@ '''line'' & ''startup'''::tsquery)
         Buffers: shared hit=7
 Planning:
-  Buffers: shared hit=27
-Planning Time: 0.590 ms
-Execution Time: 0.027 ms
+  Buffers: shared hit=25
+Planning Time: 0.650 ms
+Execution Time: 0.030 ms
 ```
 
 ## count by category (taxonomy)

@@ -29,7 +29,7 @@ pnpm infra:up && pnpm db:reset && pnpm build && pnpm dev
 | Time          | Show                                                                                                                                                        | Say                                                                                                                                                                                                                                                                                                                                                                    |
 | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **0:00–0:20** | README top, then the system diagram in `docs/architecture.md`                                                                                               | "ResourceHub is a multi-tenant resource portal: NestJS and React in TypeScript, Postgres, and Azure. The interesting part is how tenants are kept apart, so that's where I'll spend the time."                                                                                                                                                                         |
-| **0:20–0:50** | `contoso.localhost:5173` → _Sign in with single sign-on_ → **Erin Edwards**. Home page, then search for "adverse event" and open it                         | "Each tenant lives on its own hostname. The API works out the tenant from the Host header, never from the URL. Sign-in is OIDC with PKCE; locally a built-in provider stands in for Entra External ID. Erin is an editor, so she sees drafts too."                                                                                                                     |
+| **0:20–0:50** | `contoso.localhost:5173` → _Sign in with single sign-on_ → **Erin Edwards**. Home page, then search for "near miss" and open it                             | "Each tenant lives on its own hostname. The API works out the tenant from the Host header, never from the URL. Sign-in is OIDC with PKCE; locally a built-in provider stands in for Entra External ID. Erin is an editor, so she sees drafts too."                                                                                                                     |
 | **0:50–1:05** | `northwind.localhost:5173` → sign in as **Nora Nguyen**                                                                                                     | "Same code, same database, a different tenant: different branding, different content, and no trace of Contoso."                                                                                                                                                                                                                                                        |
 | **1:05–1:35** | Terminal: the psql snippet below                                                                                                                            | "This is the guarantee. As the API's own database role, with no tenant set, I get zero rows. I set the tenant and get only Contoso's rows. RLS is FORCEd and the role can't bypass it, so even a bug in a service can't leak another tenant's data. CI fails if any table lacks a policy, and the isolation suite calls every route with the other tenant's real ids." |
 | **1:35–2:05** | Contoso as **Olivia Owens** → Admin → Integrations → _Test connection_, then _Sync now_ on "Partner document library". Then Resources → filter drafts       | "Outside systems sit behind one adapter interface. This one is SOAP, built from a committed WSDL with WS-Security. Syncs run as BullMQ jobs in the worker, never in the request, with retries, a circuit breaker and an SSRF guard. Partner documents arrive as drafts for review."                                                                                    |
@@ -47,7 +47,7 @@ docker compose exec -e PGPASSWORD=app_dev_pw postgres psql -U resourcehub_app -d
 SELECT count(*) FROM resources;                                     -- 0: no tenant set, fails closed
 BEGIN;
 SELECT set_config('app.tenant_id', '01960000-0000-7000-8000-00000000c001', true);  -- Contoso
-SELECT count(*) FROM resources;                                     -- 15: Contoso's rows only
+SELECT count(*) FROM resources;                                     -- 9: Contoso's rows only (15 once a partner sync has run)
 COMMIT;
 SELECT rolname, rolbypassrls FROM pg_roles WHERE rolname LIKE 'resourcehub%';     -- app = f
 ```
@@ -88,7 +88,7 @@ Each section covers: **What**, **Show**, **Say**, and **Code**.
 - **What:** The tenant's library. The home page has categories and recently updated items. The
   resource list has search (Postgres full-text), category and tag filters, and cursor pagination.
   The detail page renders Markdown sanitised with DOMPurify, and has attachments.
-- **Show:** As Erin, search "adverse event" and open the result. Download an attachment.
+- **Show:** As Erin, search "near miss" and open the result. Download an attachment.
 - **Say:** "Search runs in Postgres, scoped by RLS like everything else. Attachments live in Blob
   Storage under `tenants/{id}/`, and the API only hands out short-lived SAS URLs for that prefix."
 - **Code:** `apps/web/src/routes/home.tsx`, `resources.tsx`, `resource-detail.tsx`;
@@ -118,7 +118,7 @@ The **Admin** link opens six tabs:
 | **Members**      | List, change a role, remove someone                                    | "Removing someone revokes their refresh sessions immediately. Only an owner can change an owner, and the last owner can't be removed."                      |
 | **Invitations**  | Invite `new.hire@example.com` as editor, open Mailpit, follow the link | "Tokens are single-use, stored only as SHA-256 hashes, and expire in 7 days. Repeated failed invites trigger a lockout."                                    |
 | **Branding**     | Change the primary colour and font and watch the **Live preview**      | "Branding is CSS variables loaded at boot. Fonts come from an allow-list so a tenant can't inject arbitrary CSS."                                           |
-| **Domains**      | Add `portal.contoso-pharma.localhost` and verify it, then open it      | "In production, ownership is proved with a DNS TXT record. Locally, `.localhost` names verify instantly. A custom domain only resolves after verification." |
+| **Domains**      | Add `portal.contoso-mfg.localhost` and verify it, then open it         | "In production, ownership is proved with a DNS TXT record. Locally, `.localhost` names verify instantly. A custom domain only resolves after verification." |
 | **Integrations** | See section 6                                                          |                                                                                                                                                             |
 | **Audit log**    | Filter by action, e.g. `auth.login` or `membership.role_changed`       | "The audit log is append-only. The app's DB role can only INSERT and SELECT, and a trigger blocks updates. Diffs redact secrets."                           |
 
@@ -132,7 +132,7 @@ The **Admin** link opens six tabs:
   docker-compose. Northwind has a public SOAP country-info service and a public REST news API.
 - **Show:** As Olivia: _Test connection_ shows "Connected in N ms", then _Sync now_ moves the run
   from queued to succeeded with "6 fetched · 6 new". Open Resources → drafts to see
-  "Cold chain handling SOP" and the other partner documents.
+  "Lockout/tagout procedure" and the other partner documents.
 - **Say:** "SOAP stays at the edge. The WSDL is committed, never fetched at runtime, and XML is
   mapped to Zod-validated types before the rest of the app sees it. Syncs are BullMQ jobs with
   jittered retries and a per-integration circuit breaker. The integration stores a _reference_ to

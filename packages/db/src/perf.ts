@@ -45,7 +45,7 @@ export async function perfSeed(
           `r-${i}`,
           JSON.stringify({
             format: 'markdown',
-            content: `Body ${i} about cold chain, safety and onboarding.`,
+            content: `Body ${i} about line startup, safety and onboarding.`,
           }),
           i % 4 === 0 ? 'draft' : 'published',
           catId,
@@ -96,7 +96,7 @@ const QUERIES: Record<string, string> = {
      ORDER BY r.updated_at DESC LIMIT 21`,
   'full-text search': `
     SELECT r.id FROM resources r
-     WHERE r.status = 'published' AND r.search @@ websearch_to_tsquery('english', 'cold chain')
+     WHERE r.status = 'published' AND r.search @@ websearch_to_tsquery('english', 'line startup')
      ORDER BY r.updated_at DESC LIMIT 21`,
   'count by category (taxonomy)': `
     SELECT c.id, count(r.id) FROM categories c

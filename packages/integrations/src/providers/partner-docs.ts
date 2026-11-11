@@ -49,7 +49,7 @@ export function mapPartnerDocument(d: z.infer<typeof SoapDocument>): ExternalDoc
 
 /**
  * PartnerDocumentService (SOAP 1.1, document/literal, WS-Security UsernameToken).
- * Stands in for the legacy EHR/ERP/regulatory systems that only speak SOAP.
+ * Stands in for the legacy ERP/supply-chain/compliance systems that only speak SOAP.
  */
 export class PartnerDocsAdapter implements IntegrationAdapter<
   WithSecret<PartnerDocsConfig>,

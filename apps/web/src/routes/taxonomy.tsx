@@ -13,7 +13,7 @@ export function TaxonomyPage() {
   const { can } = useAuth();
   const cats = useQuery(categoriesQuery());
   const tags = useQuery(tagsQuery());
-  const [cat, setCat] = useState({ name: '', description: '', icon: 'flask-conical' });
+  const [cat, setCat] = useState({ name: '', description: '', icon: 'clipboard-list' });
   const [tag, setTag] = useState('');
 
   const refresh = () =>
@@ -32,7 +32,7 @@ export function TaxonomyPage() {
         }),
       ),
     onSuccess: async () => {
-      setCat({ name: '', description: '', icon: 'flask-conical' });
+      setCat({ name: '', description: '', icon: 'clipboard-list' });
       await refresh();
       toast.success('Category added');
     },

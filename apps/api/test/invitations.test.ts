@@ -107,7 +107,7 @@ describe('invitations', () => {
       url: `/api/v1/invitations/preview?token=${token}`,
     });
     expect(preview.json()).toMatchObject({
-      workspace: 'Contoso Pharma',
+      workspace: 'Contoso Manufacturing',
       role: 'editor',
       emailHint: 'n•••••••@contoso.example',
     });

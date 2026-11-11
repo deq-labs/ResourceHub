@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   PartnerDocumentService v1: a sample "legacy partner" SOAP API.
-  It stands in for the kind of EHR / ERP / regulatory system that only speaks SOAP.
+  It stands in for the kind of ERP / supply-chain / compliance system that only speaks SOAP.
   The ResourceHub SOAP adapter builds its client from this file and the local mock serves it.
 -->
 <definitions name="PartnerDocumentService"

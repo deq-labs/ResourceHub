@@ -89,7 +89,7 @@ Admin › Integrations, or use the public providers (country profiles, industry 
 2. DNS: `*.ROOT_DOMAIN CNAME <front_door_endpoint>`, plus the `_dnsauth` TXT record Front Door asks for.
 3. Re-run the deploy. `contoso.ROOT_DOMAIN` and `northwind.ROOT_DOMAIN` are live; `admin.ROOT_DOMAIN`
    is the platform console.
-4. **Tenant custom domains** (e.g. `hub.contoso-pharma.com`): the tenant proves ownership in-app
+4. **Tenant custom domains** (e.g. `hub.contoso-mfg.com`): the tenant proves ownership in-app
    (TXT record, Admin › Domains). An operator then adds the hostname as a Front Door custom domain
    with a managed certificate. Automating that last step through the ARM API is the next item on the list.
 

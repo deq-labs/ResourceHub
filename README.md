@@ -74,12 +74,12 @@ pnpm dev            # API :3000, worker, and web :5173, all in watch mode
 
 Then open:
 
-| URL                                 | What you get                                                  |
-| ----------------------------------- | ------------------------------------------------------------- |
-| **http://contoso.localhost:5173**   | Tenant 1: _Contoso Pharma_ (teal branding)                    |
-| **http://northwind.localhost:5173** | Tenant 2: _Northwind Health_ (different branding and content) |
-| **http://admin.localhost:5173**     | Platform console, which only the platform admin can use       |
-| http://localhost:8025               | Mailpit inbox (invitation emails land here)                   |
+| URL                                 | What you get                                                           |
+| ----------------------------------- | ---------------------------------------------------------------------- |
+| **http://contoso.localhost:5173**   | Tenant 1: _Contoso Manufacturing_ (teal branding)                      |
+| **http://northwind.localhost:5173** | Tenant 2: _Northwind Traders_ (retail: different branding and content) |
+| **http://admin.localhost:5173**     | Platform console, which only the platform admin can use                |
+| http://localhost:8025               | Mailpit inbox (invitation emails land here)                            |
 
 The REST API's contract is [`packages/contracts/openapi.json`](packages/contracts/openapi.json)
 (OpenAPI 3.1, generated from the Zod schemas). Paste it into any OpenAPI viewer to browse it.

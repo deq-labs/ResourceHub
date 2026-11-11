@@ -2,9 +2,9 @@
   "data": [
     {
       "id": "art-2001",
-      "title": "Field guide: running a patient support webinar",
-      "summary": "Format, consent wording and follow-up for patient-facing sessions.",
-      "topic": "Patient Support",
+      "title": "Field guide: running a customer training webinar",
+      "summary": "Format, sign-up wording and follow-up for customer-facing sessions.",
+      "topic": "Customer Success",
       "url": "https://partner.example.com/articles/art-2001",
       "updated_at": "2026-02-02T10:00:00Z"
     },
@@ -18,9 +18,9 @@
     },
     {
       "id": "art-2003",
-      "title": "Quarterly medical information FAQ",
-      "summary": "Approved answers to the most common HCP questions this quarter.",
-      "topic": "Medical",
+      "title": "Quarterly product FAQ",
+      "summary": "Approved answers to the most common customer questions this quarter.",
+      "topic": "Product",
       "url": "https://partner.example.com/articles/art-2003",
       "updated_at": "2026-03-01T10:00:00Z"
     }

@@ -19,19 +19,21 @@ async function signInAs(page: Page, origin: string, name: string) {
 
 test('a Contoso editor signs in, browses, searches and opens a resource', async ({ page }) => {
   await signInAs(page, 'http://contoso.localhost:5173', 'Erin Edwards');
-  await expect(page.getByRole('heading', { level: 1, name: 'Contoso Field Hub' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Contoso Operations Hub' }),
+  ).toBeVisible();
   await expect(page.getByText('Browse by category')).toBeVisible();
   await shot(page, 'contoso-home');
 
   await page.getByRole('link', { name: 'Resources', exact: true }).click();
-  await expect(page.getByText('Speaker program compliance FAQ (draft)')).toBeVisible(); // editors see drafts
+  await expect(page.getByText('Supplier visit policy FAQ (draft)')).toBeVisible(); // editors see drafts
   await shot(page, 'contoso-resources');
 
-  await page.getByPlaceholder('Search titles, summaries and content').fill('adverse event');
+  await page.getByPlaceholder('Search titles, summaries and content').fill('near miss');
   await page.getByRole('button', { name: 'Search', exact: true }).click();
-  await page.getByText('Adverse event reporting in 24 hours').click();
+  await page.getByText('Near-miss reporting in 24 hours').click();
   await expect(
-    page.getByRole('heading', { level: 1, name: 'Adverse event reporting in 24 hours' }),
+    page.getByRole('heading', { level: 1, name: 'Near-miss reporting in 24 hours' }),
   ).toBeVisible();
   await expect(page.locator('article')).toContainText('four minimum criteria');
   await shot(page, 'contoso-resource');
@@ -40,9 +42,9 @@ test('a Contoso editor signs in, browses, searches and opens a resource', async 
 test('Northwind is a different, isolated workspace with its own branding', async ({ page }) => {
   await signInAs(page, 'http://northwind.localhost:5173', 'Nora Nguyen');
   await expect(
-    page.getByRole('heading', { level: 1, name: 'Northwind Care Library' }),
+    page.getByRole('heading', { level: 1, name: 'Northwind Store Library' }),
   ).toBeVisible();
-  await expect(page.getByText('Sepsis screening and escalation pathway').first()).toBeVisible();
+  await expect(page.getByText('Opening and closing the store').first()).toBeVisible();
   await expect(page.getByText('Contoso')).toHaveCount(0);
   const primary = await page.evaluate(() =>
     getComputedStyle(document.documentElement).getPropertyValue('--brand-primary'),
@@ -54,7 +56,7 @@ test('Northwind is a different, isolated workspace with its own branding', async
 test('a viewer cannot open drafts and sees no editor controls', async ({ page }) => {
   await signInAs(page, 'http://contoso.localhost:5173', 'Victor Vance');
   await expect(page.getByRole('link', { name: /Taxonomy/ })).toHaveCount(0);
-  await page.goto('http://contoso.localhost:5173/resources/speaker-program-compliance-faq-draft');
+  await page.goto('http://contoso.localhost:5173/resources/supplier-visit-policy-faq-draft');
   await expect(page.getByText('Resource not found')).toBeVisible();
 });
 

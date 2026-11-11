@@ -16,16 +16,16 @@ const TENANTS = {
   contoso: {
     host: 'contoso.localhost',
     user: 'dev-olivia',
-    own: 'Clinical Operations',
-    foreign: 'Patient Care',
-    slug: 'adverse-event-reporting-in-24-hours',
+    own: 'Plant Operations',
+    foreign: 'Store Operations',
+    slug: 'near-miss-reporting-in-24-hours',
   },
   northwind: {
     host: 'northwind.localhost',
     user: 'dev-nora',
-    own: 'Patient Care',
-    foreign: 'Clinical Operations',
-    slug: 'sepsis-screening-and-escalation-pathway',
+    own: 'Store Operations',
+    foreign: 'Plant Operations',
+    slug: 'opening-and-closing-the-store',
   },
 };
 
