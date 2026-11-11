@@ -23,6 +23,8 @@ const ConfigSchema = z.object({
     .enum(['true', 'false'])
     .default('false')
     .transform((v) => v === 'true'),
+  /** When set, requests must carry this X-Azure-FDID header (i.e. came through our Front Door). */
+  FRONT_DOOR_ID: z.string().optional(),
   TENANT_HOST_CACHE_TTL_SECONDS: z.coerce.number().int().default(300),
 
   // ---- Auth -------------------------------------------------------------------------------

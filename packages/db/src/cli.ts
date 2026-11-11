@@ -4,6 +4,7 @@ import { runMigrations } from './migrate.js';
 import { checkRlsCoverage } from './rls-check.js';
 import { seedDemo } from './seed/seed.js';
 import { contentSeedSteps } from './seed/steps.js';
+import { bootstrapRoles } from './bootstrap.js';
 
 const LOCAL = 'postgres://%s@localhost:55432/resourcehub';
 const env = (key: string, fallback: string) => process.env[key] ?? fallback;
@@ -39,8 +40,27 @@ async function main(): Promise<void> {
       console.log('RLS coverage check passed: every table has RLS + FORCE + a policy.');
       return;
     }
+    case 'bootstrap': {
+      // Cloud only: create/rotate the three roles as the server admin. Values come from Key Vault refs.
+      const need = (k: string) => {
+        const v = process.env[k];
+        if (!v) throw new Error(`${k} is required for bootstrap`);
+        return v;
+      };
+      await bootstrapRoles({
+        adminUrl: need('DATABASE_URL_ADMIN'),
+        database: process.env.DATABASE_NAME ?? 'resourcehub',
+        passwords: {
+          migrator: need('DB_PASSWORD_MIGRATOR'),
+          app: need('DB_PASSWORD_APP'),
+          platform: need('DB_PASSWORD_PLATFORM'),
+        },
+      });
+      console.log('Roles bootstrapped.');
+      return;
+    }
     default:
-      console.error('Usage: resourcehub-db <migrate|seed|check-rls>');
+      console.error('Usage: resourcehub-db <bootstrap|migrate|seed|check-rls>');
       process.exitCode = 2;
   }
 }

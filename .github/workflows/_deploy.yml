@@ -1,0 +1,155 @@
+# Reusable deploy: dev on merge to main, prod on a release tag (behind the `prod` environment's
+# required reviewers). Azure login is OIDC federation: no client secret exists anywhere.
+name: deploy (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        type: string
+        required: true
+      image_tag:
+        type: string
+        required: true
+      promote_from_acr:
+        description: For prod, import the already-built, already-scanned images from this registry.
+        type: string
+        default: ''
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    timeout-minutes: 45
+    concurrency:
+      group: deploy-${{ inputs.environment }}
+      cancel-in-progress: false
+    env:
+      TF_DIR: infra/terraform/envs/${{ inputs.environment }}
+      TAG: ${{ inputs.image_tag }}
+      ARM_USE_OIDC: 'true'
+      ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+      ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      TF_VAR_image_tag: ${{ inputs.image_tag }}
+      TF_VAR_root_domain: ${{ vars.ROOT_DOMAIN }}
+      TF_VAR_wildcard_certificate_key_vault_id: ${{ vars.WILDCARD_CERT_KV_ID }}
+      TF_VAR_oidc_issuer: ${{ vars.OIDC_ISSUER }}
+      TF_VAR_oidc_client_id: ${{ vars.OIDC_CLIENT_ID }}
+      TF_VAR_alert_email: ${{ vars.ALERT_EMAIL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.13.4
+          terraform_wrapper: false
+
+      - name: terraform init
+        working-directory: ${{ env.TF_DIR }}
+        run: |
+          terraform init -input=false \
+            -backend-config="resource_group_name=${{ vars.TFSTATE_RESOURCE_GROUP }}" \
+            -backend-config="storage_account_name=${{ vars.TFSTATE_STORAGE_ACCOUNT }}" \
+            -backend-config="container_name=${{ vars.TFSTATE_CONTAINER }}"
+
+      - name: Ensure the registry exists (first run)
+        working-directory: ${{ env.TF_DIR }}
+        run: terraform apply -input=false -auto-approve -target=module.resourcehub.azurerm_container_registry.this
+
+      - name: Read outputs
+        id: tf
+        working-directory: ${{ env.TF_DIR }}
+        run: |
+          out=$(terraform output -json deploy)
+          echo "acr=$(jq -r .acr_name.value <<<"$out")" >> "$GITHUB_OUTPUT"
+          echo "acr_server=$(jq -r .acr_login_server.value <<<"$out")" >> "$GITHUB_OUTPUT"
+
+      # ---- images -------------------------------------------------------------------------
+      - name: Build, scan and push images
+        if: inputs.promote_from_acr == ''
+        run: |
+          az acr login --name "${{ steps.tf.outputs.acr }}"
+          for app in api worker; do
+            img="${{ steps.tf.outputs.acr_server }}/resourcehub-$app:$TAG"
+            docker build -f apps/$app/Dockerfile -t "$img" --label org.opencontainers.image.revision=$GITHUB_SHA .
+            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.67.2 image \
+              --exit-code 1 --severity CRITICAL --ignore-unfixed --no-progress "$img"
+            docker push "$img"
+          done
+
+      - name: Promote the exact dev images (same digest) into this registry
+        if: inputs.promote_from_acr != ''
+        run: |
+          for app in api worker; do
+            az acr import --name "${{ steps.tf.outputs.acr }}" --force \
+              --source "${{ inputs.promote_from_acr }}.azurecr.io/resourcehub-$app:$TAG" \
+              --image "resourcehub-$app:$TAG"
+          done
+
+      # ---- database first: migrations run before new code takes traffic ---------------------
+      - name: Update DB jobs to the new image
+        working-directory: ${{ env.TF_DIR }}
+        run: terraform apply -input=false -auto-approve -target=module.resourcehub.azurerm_container_app_job.db
+
+      - name: Bootstrap roles (idempotent) and migrate as resourcehub_migrator
+        working-directory: ${{ env.TF_DIR }}
+        run: |
+          rg=$(terraform output -json deploy | jq -r .resource_group_name.value)
+          for job in $(terraform output -json deploy | jq -r '.db_job_names.value | .bootstrap, .migrate'); do
+            exec=$(az containerapp job start -g "$rg" -n "$job" --query name -o tsv)
+            for i in $(seq 1 60); do
+              status=$(az containerapp job execution show -g "$rg" -n "$job" --job-execution-name "$exec" --query properties.status -o tsv)
+              echo "$job: $status"
+              [ "$status" = "Succeeded" ] && break
+              [ "$status" = "Failed" ] && { echo "::error::$job failed"; exit 1; }
+              sleep 10
+            done
+            [ "$status" = "Succeeded" ] || { echo "::error::$job timed out"; exit 1; }
+          done
+
+      - name: terraform apply (everything)
+        working-directory: ${{ env.TF_DIR }}
+        run: terraform apply -input=false -auto-approve
+
+      # ---- SPA ------------------------------------------------------------------------------
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Build and upload the SPA
+        working-directory: ${{ env.TF_DIR }}
+        env:
+          VITE_ROOT_DOMAIN: ${{ vars.ROOT_DOMAIN }}
+          VITE_PLATFORM_HOST: admin.${{ vars.ROOT_DOMAIN }}
+        run: |
+          (cd "$GITHUB_WORKSPACE" && pnpm install --frozen-lockfile && pnpm turbo build --filter=@resourcehub/web)
+          account=$(terraform output -json deploy | jq -r .web_storage_account.value)
+          az storage blob upload-batch --auth-mode login --account-name "$account" \
+            --destination '$web' --source "$GITHUB_WORKSPACE/apps/web/dist" --overwrite
+          # index.html must never be cached; hashed assets can be cached forever.
+          az storage blob update --auth-mode login --account-name "$account" -c '$web' -n index.html \
+            --content-cache-control "no-cache"
+
+      - name: Smoke test through Front Door
+        working-directory: ${{ env.TF_DIR }}
+        run: |
+          host=$(terraform output -json deploy | jq -r .front_door_endpoint.value)
+          for i in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "https://$host/api/v1/health" || true)
+            [ "$code" = "200" ] && { echo "healthy"; exit 0; }
+            sleep 10
+          done
+          echo "::error::API not healthy through Front Door"; exit 1
