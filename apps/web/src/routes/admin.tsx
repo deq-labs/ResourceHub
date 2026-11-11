@@ -541,7 +541,7 @@ function DomainsPage() {
         <p className="mt-1 mb-4 text-sm text-slate-500">
           Point your own hostname at this workspace. It starts routing only after you prove
           ownership with a DNS TXT record. Locally, hostnames ending in <code>.localhost</code>{' '}
-          verify instantly — try <code>portal.contoso-pharma.localhost</code>.
+          verify instantly — try <code>portal.contoso-mfg.localhost</code>.
         </p>
         <form
           className="flex gap-2"

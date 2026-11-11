@@ -61,10 +61,37 @@ export class DevIdpService {
     return { keys: [(await this.loadKeys()).jwk] };
   }
 
+  /** Any *.localhost callback, or https on an explicitly listed demo host (DEV_IDP_REDIRECT_HOSTS). */
+  isAllowedRedirect(uri: string): boolean {
+    if (REDIRECT_RE.test(uri)) return true;
+    let u: URL;
+    try {
+      u = new URL(uri);
+    } catch {
+      return false;
+    }
+    return (
+      u.protocol === 'https:' &&
+      u.port === '' &&
+      u.username === '' &&
+      u.search === '' &&
+      u.hash === '' &&
+      u.pathname === '/api/v1/auth/callback' &&
+      this.config.DEV_IDP_REDIRECT_HOSTS.includes(u.hostname)
+    );
+  }
+
+  /** form-action must also allow the redirect after the sign-in POST. */
+  get pageCsp(): string {
+    const hosted = this.config.DEV_IDP_REDIRECT_HOSTS.map((h) => ` https://${h}`).join('');
+    return `default-src 'none'; style-src 'unsafe-inline'; form-action 'self' http://localhost:* http://*.localhost:*${hosted}; frame-ancestors 'none'`;
+  }
+
   validateAuthorizeRequest(p: Record<string, string | undefined>): string | null {
     if (p.response_type !== 'code') return 'unsupported response_type';
     if (p.client_id !== this.config.OIDC_CLIENT_ID) return 'unknown client_id';
-    if (!p.redirect_uri || !REDIRECT_RE.test(p.redirect_uri)) return 'redirect_uri not allowed';
+    if (!p.redirect_uri || !this.isAllowedRedirect(p.redirect_uri))
+      return 'redirect_uri not allowed';
     if (p.code_challenge_method !== 'S256' || !p.code_challenge) return 'PKCE S256 is required';
     if (!p.state || !p.nonce) return 'state and nonce are required';
     return null;

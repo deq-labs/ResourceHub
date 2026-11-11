@@ -5,6 +5,8 @@ import { checkRlsCoverage } from './rls-check.js';
 import { seedDemo } from './seed/seed.js';
 import { contentSeedSteps } from './seed/steps.js';
 import { bootstrapRoles } from './bootstrap.js';
+import { explainHotQueries, perfClean, perfSeed } from './perf.js';
+import { addVerifiedDomain } from './domains.js';
 
 const LOCAL = 'postgres://%s@localhost:55432/resourcehub';
 const env = (key: string, fallback: string) => process.env[key] ?? fallback;
@@ -40,6 +42,35 @@ async function main(): Promise<void> {
       console.log('RLS coverage check passed: every table has RLS + FORCE + a policy.');
       return;
     }
+    case 'map-domain': {
+      // Operator: attach a pre-verified hostname (e.g. a free *.vercel.app alias) to a tenant.
+      const [slug, hostname] = [process.argv[3], process.argv[4]];
+      if (!slug || !hostname) throw new Error('Usage: map-domain <tenant-slug> <hostname>');
+      await addVerifiedDomain(platformUrl, slug, hostname);
+      console.log(`${hostname} now serves tenant "${slug}".`);
+      return;
+    }
+    case 'perf-seed':
+      await perfSeed(
+        platformUrl,
+        migratorUrl,
+        Number(process.argv[3] ?? 200),
+        Number(process.argv[4] ?? 250),
+      );
+      console.log('Synthetic perf tenants seeded (slug perf-*).');
+      return;
+    case 'perf-clean':
+      await perfClean(platformUrl);
+      console.log('Synthetic perf tenants removed.');
+      return;
+    case 'explain':
+      console.log(
+        await explainHotQueries(
+          env('DATABASE_URL_APP', LOCAL.replace('%s', 'resourcehub_app:app_dev_pw')),
+          process.argv[3] ?? 'contoso',
+        ),
+      );
+      return;
     case 'bootstrap': {
       // Cloud only: create/rotate the three roles as the server admin. Values come from Key Vault refs.
       const need = (k: string) => {
@@ -60,7 +91,9 @@ async function main(): Promise<void> {
       return;
     }
     default:
-      console.error('Usage: resourcehub-db <bootstrap|migrate|seed|check-rls>');
+      console.error(
+        'Usage: resourcehub-db <bootstrap|migrate|seed|check-rls|map-domain|perf-seed|perf-clean|explain>',
+      );
       process.exitCode = 2;
   }
 }

@@ -25,5 +25,5 @@ test('an admin syncs the partner SOAP library; documents arrive as drafts', asyn
   await shot(page, 'admin-integrations');
 
   await page.goto('http://contoso.localhost:5173/resources?status=draft');
-  await expect(page.getByText('Cold chain handling SOP')).toBeVisible();
+  await expect(page.getByText('Lockout/tagout procedure')).toBeVisible();
 });

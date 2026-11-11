@@ -20,7 +20,7 @@ beforeAll(async () => {
     tx.insert(schema.tenantDomains).values([
       {
         tenantId: DEMO_TENANTS.contoso.id,
-        hostname: 'hub.contoso-pharma.test',
+        hostname: 'hub.contoso-mfg.test',
         verificationToken: 'x',
         verifiedAt: new Date(),
       },
@@ -45,7 +45,7 @@ describe('tenant resolution from Host', () => {
     expect(res.json()).toEqual({
       id: DEMO_TENANTS.contoso.id,
       slug: 'contoso',
-      name: 'Contoso Pharma',
+      name: 'Contoso Manufacturing',
     });
   });
 
@@ -75,7 +75,7 @@ describe('tenant resolution from Host', () => {
   });
 
   it('resolves a verified custom domain', async () => {
-    const res = await request(app, { host: 'hub.contoso-pharma.test', url: '/api/v1/tenant' });
+    const res = await request(app, { host: 'hub.contoso-mfg.test', url: '/api/v1/tenant' });
     expect(res.json()).toMatchObject({ slug: 'contoso' });
   });
 

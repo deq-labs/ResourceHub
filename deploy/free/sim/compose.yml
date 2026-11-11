@@ -1,0 +1,108 @@
+# Local dress rehearsal of the free deployment (Vercel + Render + Neon + Render Key Value).
+#
+#   pnpm build             # once: the edge serves apps/web/dist like Vercel would
+#   pnpm sim:free          # then open http://contoso.localhost:8080
+#   pnpm sim:free:down     # stop and wipe it
+#
+# Same image, same production-mode settings and same apps/web/vercel.json as the real thing.
+# Deliberate local differences: plain http (so COOKIE_SECURE=false), *.localhost hostnames
+# instead of *.vercel.app aliases, and no file storage or email.
+name: resourcehub-free-sim
+
+x-api-env: &api-env
+  DATABASE_URL_APP: postgres://resourcehub_app:app_sim_pw@pg:5432/neondb
+  DATABASE_URL_PLATFORM: postgres://resourcehub_platform:platform_sim_pw@pg:5432/neondb
+  DB_POOL_MAX: '5'
+  REDIS_URL: redis://keyvalue:6379
+  TRUST_PROXY: 'true'
+  EDGE_SECRET: sim-only-edge-secret-0123456789abcdef0123
+  ROOT_DOMAIN: demo.invalid
+  PLATFORM_HOST: admin.localhost
+  AUTH_PROVIDER: dev
+  ALLOW_DEV_IDP_IN_PRODUCTION: 'true'
+  OIDC_ISSUER: http://admin.localhost:8080/api/v1/dev-idp
+  OIDC_CLIENT_ID: resourcehub-demo
+  DEV_IDP_REDIRECT_HOSTS: ''
+  AUTH_JWT_SECRET: sim-only-jwt-secret-0123456789abcdef0123456789
+  COOKIE_SECURE: 'false'
+  PUBLIC_SCHEME: http
+  DOMAIN_VERIFICATION_MODE: dns
+  MAIL_TRANSPORT: queue
+
+services:
+  # Neon: Postgres 17 whose owner role is not a superuser.
+  pg:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_PASSWORD: sim_superuser_pw
+    volumes:
+      - ./neon-init.sql:/docker-entrypoint-initdb.d/neon-init.sql:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d neondb']
+      interval: 2s
+      retries: 30
+
+  # Render Key Value, with the eviction policy BullMQ needs.
+  keyvalue:
+    image: redis:7-alpine
+    command: ['redis-server', '--maxmemory-policy', 'noeviction']
+
+  # What you'd run from your laptop against Neon: roles, schema, demo data, host mappings.
+  setup:
+    image: resourcehub-free:sim
+    build:
+      context: ../../..
+      dockerfile: deploy/free/Dockerfile
+    depends_on:
+      pg:
+        condition: service_healthy
+    environment:
+      DATABASE_URL_ADMIN: postgres://neondb_owner:owner_sim_pw@pg:5432/neondb
+      DATABASE_NAME: neondb
+      DB_PASSWORD_MIGRATOR: migrator_sim_pw
+      DB_PASSWORD_APP: app_sim_pw
+      DB_PASSWORD_PLATFORM: platform_sim_pw
+      DATABASE_URL_MIGRATOR: postgres://resourcehub_migrator:migrator_sim_pw@pg:5432/neondb
+      DATABASE_URL_PLATFORM: postgres://resourcehub_platform:platform_sim_pw@pg:5432/neondb
+    working_dir: /app/api/node_modules/@resourcehub/db
+    entrypoint: ['sh', '-c']
+    command:
+      - >-
+        node dist/cli.js bootstrap && node dist/cli.js migrate && node dist/cli.js seed &&
+        node dist/cli.js check-rls &&
+        node dist/cli.js map-domain contoso contoso.localhost &&
+        node dist/cli.js map-domain northwind northwind.localhost
+
+  # Render: API + worker in one container, production mode.
+  app:
+    image: resourcehub-free:sim
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+      keyvalue:
+        condition: service_started
+    environment: *api-env
+    # The API calls its own sign-in endpoint back through the edge, like on Vercel.
+    extra_hosts:
+      - 'admin.localhost:host-gateway'
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:10000/api/v1/health']
+      interval: 2s
+      retries: 60
+
+  # Vercel: serves the SPA and applies apps/web/vercel.json.
+  edge:
+    image: node:22-alpine
+    command: ['node', '/edge.mjs']
+    depends_on:
+      app:
+        condition: service_healthy
+    environment:
+      API_ORIGIN: http://app:10000
+      EDGE_SECRET: sim-only-edge-secret-0123456789abcdef0123
+    volumes:
+      - ./edge.mjs:/edge.mjs:ro
+      - ../../../apps/web/vercel.json:/vercel.json:ro
+      - ../../../apps/web/dist:/web:ro
+    ports:
+      - '8080:8080'

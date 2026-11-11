@@ -25,4 +25,4 @@ ENV NODE_ENV=production
 WORKDIR /app
 COPY --from=build --chown=node:node /out ./
 USER node
-CMD ["node", "--enable-source-maps", "dist/main.js"]
+CMD ["node", "--enable-source-maps", "--import", "./dist/instrumentation.js", "dist/main.js"]

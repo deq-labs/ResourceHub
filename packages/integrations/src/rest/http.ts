@@ -2,6 +2,7 @@ import type { z } from 'zod';
 import { CircuitBreaker } from '../resilience/circuit-breaker.js';
 import { DEFAULT_RETRY, withRetry, type RetryOptions } from '../resilience/retry.js';
 import { IntegrationError } from '../types.js';
+import { assertEgressAllowed } from '../resilience/egress.js';
 
 export interface RestClientOptions {
   baseUrl: string;
@@ -34,6 +35,7 @@ export class RestClient {
     schema: z.ZodType<T>,
     body?: unknown,
   ): Promise<T> {
+    await assertEgressAllowed(new URL(path, this.opts.baseUrl));
     const call = () =>
       withRetry(async () => {
         let res: Response;

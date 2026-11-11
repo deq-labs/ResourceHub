@@ -34,10 +34,10 @@ describe('resources', () => {
   });
 
   it('a viewer asking for a draft by slug gets 404, not 403', async () => {
-    const res = await get(viewer, '/api/v1/resources/speaker-program-compliance-faq-draft');
+    const res = await get(viewer, '/api/v1/resources/supplier-visit-policy-faq-draft');
     expect(res.statusCode).toBe(404);
     expect(
-      (await get(editor, '/api/v1/resources/speaker-program-compliance-faq-draft')).statusCode,
+      (await get(editor, '/api/v1/resources/supplier-visit-policy-faq-draft')).statusCode,
     ).toBe(200);
   });
 
@@ -54,16 +54,16 @@ describe('resources', () => {
   });
 
   it('filters by category, tag, featured and full-text search', async () => {
-    const byCat = (await get(viewer, '/api/v1/resources?filter[category]=regulatory')).json();
+    const byCat = (await get(viewer, '/api/v1/resources?filter[category]=quality')).json();
     expect(
-      byCat.data.every((r: { category: { slug: string } }) => r.category.slug === 'regulatory'),
+      byCat.data.every((r: { category: { slug: string } }) => r.category.slug === 'quality'),
     ).toBe(true);
     const byTag = (await get(viewer, '/api/v1/resources?filter[tag]=checklist')).json();
     expect(byTag.data.length).toBeGreaterThanOrEqual(3);
     const featured = (await get(viewer, '/api/v1/resources?filter[featured]=true')).json();
     expect(featured.data.every((r: { featured: boolean }) => r.featured)).toBe(true);
-    const search = (await get(viewer, '/api/v1/resources?q=adverse%20event')).json();
-    expect(search.data[0].title).toBe('Adverse event reporting in 24 hours');
+    const search = (await get(viewer, '/api/v1/resources?q=near%20miss')).json();
+    expect(search.data[0].title).toBe('Near-miss reporting in 24 hours');
   });
 
   it('editor creates, publishes and edits; viewer cannot write; only admins delete', async () => {
@@ -76,8 +76,8 @@ describe('resources', () => {
       token: editor.accessToken,
       headers: idem(),
       body: {
-        title: 'Cold chain excursion response',
-        summary: 'What to do when a shipment arrives warm.',
+        title: 'Line stoppage response',
+        summary: 'What to do when a production line stops unexpectedly.',
         body: '## Steps\n\n1. Quarantine\n2. Report',
         categoryId: cats[0].id,
         tagIds: [tags[0].id],
@@ -86,7 +86,7 @@ describe('resources', () => {
     expect(created.statusCode).toBe(201);
     const r = created.json();
     expect(r).toMatchObject({
-      slug: 'cold-chain-excursion-response',
+      slug: 'line-stoppage-response',
       status: 'draft',
       author: { name: 'Erin Edwards' },
     });
@@ -146,7 +146,7 @@ describe('resources', () => {
 describe('taxonomy', () => {
   it('lists categories with counts of what the caller can see', async () => {
     const cats = (await get(viewer, '/api/v1/categories')).json().data;
-    expect(cats.map((c: { slug: string }) => c.slug)).toContain('clinical-operations');
+    expect(cats.map((c: { slug: string }) => c.slug)).toContain('plant-operations');
     const training = cats.find((c: { slug: string }) => c.slug === 'training');
     expect(training.resourceCount).toBe(1); // the draft FAQ is hidden from viewers
   });
@@ -159,7 +159,7 @@ describe('taxonomy', () => {
         url: '/api/v1/categories',
         token: editor.accessToken,
         headers: idem(),
-        body: { name: 'Pharmacovigilance' },
+        body: { name: 'Sustainability' },
       });
     expect((await make()).statusCode).toBe(201);
     expect((await make()).statusCode).toBe(409);
@@ -168,9 +168,7 @@ describe('taxonomy', () => {
 
 describe('files (direct-to-blob upload via SAS)', () => {
   it('upload ticket -> PUT to blob -> complete -> download link', async () => {
-    const resource = (
-      await get(editor, '/api/v1/resources/site-initiation-visit-checklist')
-    ).json();
+    const resource = (await get(editor, '/api/v1/resources/line-startup-checklist')).json();
     const content = Buffer.from('%PDF-1.4 demo checklist');
     const ticket = await request(app, {
       host: HOSTS.contoso,
@@ -179,7 +177,7 @@ describe('files (direct-to-blob upload via SAS)', () => {
       token: editor.accessToken,
       headers: idem(),
       body: {
-        filename: 'SIV checklist.pdf',
+        filename: 'Line startup checklist.pdf',
         mime: 'application/pdf',
         size: content.length,
         resourceId: resource.id,
@@ -204,9 +202,9 @@ describe('files (direct-to-blob upload via SAS)', () => {
     expect(done.statusCode).toBe(200);
     expect(done.json()).toMatchObject({ status: 'ready', size: content.length });
 
-    const detail = (await get(viewer, '/api/v1/resources/site-initiation-visit-checklist')).json();
+    const detail = (await get(viewer, '/api/v1/resources/line-startup-checklist')).json();
     expect(detail.attachments.map((a: { filename: string }) => a.filename)).toContain(
-      'SIV checklist.pdf',
+      'Line startup checklist.pdf',
     );
 
     const link = (await get(viewer, `/api/v1/files/${t.file.id}/download`)).json();
@@ -233,7 +231,7 @@ describe('branding and domains', () => {
     const res = await request(app, { host: HOSTS.contoso, url: '/api/v1/branding' });
     expect(res.statusCode).toBe(200);
     expect(res.json()).toMatchObject({
-      hubTitle: 'Contoso Field Hub',
+      hubTitle: 'Contoso Operations Hub',
       font: 'IBM Plex Sans',
       colors: { primary: '#0f766e' },
     });
@@ -267,18 +265,17 @@ describe('branding and domains', () => {
       url: '/api/v1/domains',
       token: admin.accessToken,
       headers: idem(),
-      body: { hostname: 'hub.contoso-pharma.localhost' },
+      body: { hostname: 'hub.contoso-mfg.localhost' },
     });
     expect(created.statusCode).toBe(201);
     const domain = created.json();
     expect(domain.verification).toMatchObject({
       type: 'TXT',
-      name: '_resourcehub-challenge.hub.contoso-pharma.localhost',
+      name: '_resourcehub-challenge.hub.contoso-mfg.localhost',
     });
 
     expect(
-      (await request(app, { host: 'hub.contoso-pharma.localhost', url: '/api/v1/tenant' }))
-        .statusCode,
+      (await request(app, { host: 'hub.contoso-mfg.localhost', url: '/api/v1/tenant' })).statusCode,
     ).toBe(404);
     const verified = await request(app, {
       host: HOSTS.contoso,
@@ -289,7 +286,7 @@ describe('branding and domains', () => {
     });
     expect(verified.json().verified).toBe(true);
     const routed = await request(app, {
-      host: 'hub.contoso-pharma.localhost',
+      host: 'hub.contoso-mfg.localhost',
       url: '/api/v1/tenant',
     });
     expect(routed.json()).toMatchObject({ slug: 'contoso' });

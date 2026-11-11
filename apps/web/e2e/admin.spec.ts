@@ -35,11 +35,11 @@ test('platform admin impersonates a tenant user with a recorded reason', async (
   await page.getByRole('button', { name: 'Sign in' }).click();
   await page.getByRole('button', { name: /Pat Platform/ }).click();
   await expect(page.getByRole('heading', { name: 'Tenants' })).toBeVisible();
-  await expect(page.getByText('Contoso Pharma')).toBeVisible();
+  await expect(page.getByText('Contoso Manufacturing')).toBeVisible();
   await shot(page, 'platform-tenants');
 
   await page
-    .getByRole('row', { name: /Contoso Pharma/ })
+    .getByRole('row', { name: /Contoso Manufacturing/ })
     .getByRole('button', { name: 'Impersonate' })
     .click();
   await page

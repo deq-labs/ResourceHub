@@ -27,13 +27,13 @@ export const DEMO_TENANTS = {
   contoso: {
     id: '01960000-0000-7000-8000-00000000c001',
     slug: 'contoso',
-    name: 'Contoso Pharma',
+    name: 'Contoso Manufacturing',
     plan: 'enterprise',
   },
   northwind: {
     id: '01960000-0000-7000-8000-00000000a001',
     slug: 'northwind',
-    name: 'Northwind Health',
+    name: 'Northwind Traders',
     plan: 'pro',
   },
 } as const satisfies Record<string, DemoTenant>;

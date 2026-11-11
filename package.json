@@ -23,7 +23,9 @@
     "db:check-rls": "pnpm --filter @resourcehub/db db:check-rls",
     "db:generate": "pnpm --filter @resourcehub/db db:generate",
     "db:reset": "docker compose rm -sfv postgres && docker volume rm -f resourcehub_pgdata && docker compose up -d --wait postgres && pnpm db:migrate && pnpm db:seed",
-    "gen:api": "pnpm turbo build --filter=@resourcehub/api... && pnpm --filter @resourcehub/api gen:openapi && pnpm --filter @resourcehub/contracts gen:client && prettier --write packages/contracts/openapi.json"
+    "gen:api": "pnpm turbo build --filter=@resourcehub/api... && pnpm --filter @resourcehub/api gen:openapi && pnpm --filter @resourcehub/contracts gen:client && prettier --write packages/contracts/openapi.json",
+    "sim:free": "docker compose -f deploy/free/sim/compose.yml up --build -d --wait && echo Open http://contoso.localhost:8080",
+    "sim:free:down": "docker compose -f deploy/free/sim/compose.yml down -v"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.0",

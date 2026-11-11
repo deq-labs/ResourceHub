@@ -85,7 +85,7 @@ describe('PartnerDocsAdapter (SOAP + WS-Security) against the mock built from th
     expect(docs).toHaveLength(6); // page size 4 -> two pages
     expect(docs[0]).toMatchObject({
       externalId: 'PD-1001',
-      title: 'Cold chain handling SOP',
+      title: 'Lockout/tagout procedure',
       category: 'Operations',
     });
     expect(docs[0]!.updatedAt).toBeInstanceOf(Date);

@@ -4,6 +4,7 @@ import soap from 'soap';
 import { CircuitBreaker } from '../resilience/circuit-breaker.js';
 import { DEFAULT_RETRY, withRetry, type RetryOptions } from '../resilience/retry.js';
 import { IntegrationError } from '../types.js';
+import { assertEgressAllowed } from '../resilience/egress.js';
 
 /** WSDLs are committed to the repo and read from disk: no runtime fetch of a partner's WSDL. */
 export const wsdlPath = (name: string) =>
@@ -86,6 +87,7 @@ export async function callSoap(
   operation: string,
   args: unknown,
 ): Promise<unknown> {
+  await assertEgressAllowed(opts.endpoint);
   const call = () =>
     withRetry(async () => {
       try {
