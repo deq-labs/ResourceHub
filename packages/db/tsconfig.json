@@ -1,0 +1,7 @@
+{
+  "extends": "@resourcehub/config/tsconfig.node.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": ["src", "test", "tests", "scripts"]
+}

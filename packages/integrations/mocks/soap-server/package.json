@@ -1,0 +1,12 @@
+{
+  "name": "resourcehub-soap-mock",
+  "private": true,
+  "type": "module",
+  "description": "Local mock of the PartnerDocumentService SOAP API (WS-Security UsernameToken).",
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "dependencies": {
+    "soap": "1.14.0"
+  }
+}

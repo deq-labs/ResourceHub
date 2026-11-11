@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  PartnerDocumentService v1: a sample "legacy partner" SOAP API.
+  It stands in for the kind of EHR / ERP / regulatory system that only speaks SOAP.
+  The ResourceHub SOAP adapter builds its client from this file and the local mock serves it.
+-->
+<definitions name="PartnerDocumentService"
+  targetNamespace="urn:resourcehub:partner-docs:v1"
+  xmlns="http://schemas.xmlsoap.org/wsdl/"
+  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+  xmlns:tns="urn:resourcehub:partner-docs:v1"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+  <types>
+    <xsd:schema targetNamespace="urn:resourcehub:partner-docs:v1" elementFormDefault="qualified">
+      <xsd:complexType name="Document">
+        <xsd:sequence>
+          <xsd:element name="DocumentId" type="xsd:string"/>
+          <xsd:element name="Title" type="xsd:string"/>
+          <xsd:element name="Summary" type="xsd:string"/>
+          <xsd:element name="Category" type="xsd:string"/>
+          <xsd:element name="Revision" type="xsd:int"/>
+          <xsd:element name="UpdatedAt" type="xsd:dateTime"/>
+        </xsd:sequence>
+      </xsd:complexType>
+      <xsd:complexType name="DocumentList">
+        <xsd:sequence>
+          <xsd:element name="Document" type="tns:Document" minOccurs="0" maxOccurs="unbounded"/>
+        </xsd:sequence>
+      </xsd:complexType>
+
+      <xsd:element name="PingRequest">
+        <xsd:complexType><xsd:sequence/></xsd:complexType>
+      </xsd:element>
+      <xsd:element name="PingResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="Status" type="xsd:string"/>
+            <xsd:element name="ServerTime" type="xsd:dateTime"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:element name="GetDocumentsSinceRequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="Since" type="xsd:dateTime"/>
+            <xsd:element name="PageToken" type="xsd:string" minOccurs="0"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="GetDocumentsSinceResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="Documents" type="tns:DocumentList"/>
+            <xsd:element name="NextPageToken" type="xsd:string" minOccurs="0"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:element name="SubmitDocumentRequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="Document" type="tns:Document"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="SubmitDocumentResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="ReferenceId" type="xsd:string"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:schema>
+  </types>
+
+  <message name="PingInput"><part name="parameters" element="tns:PingRequest"/></message>
+  <message name="PingOutput"><part name="parameters" element="tns:PingResponse"/></message>
+  <message name="GetDocumentsSinceInput"><part name="parameters" element="tns:GetDocumentsSinceRequest"/></message>
+  <message name="GetDocumentsSinceOutput"><part name="parameters" element="tns:GetDocumentsSinceResponse"/></message>
+  <message name="SubmitDocumentInput"><part name="parameters" element="tns:SubmitDocumentRequest"/></message>
+  <message name="SubmitDocumentOutput"><part name="parameters" element="tns:SubmitDocumentResponse"/></message>
+
+  <portType name="PartnerDocumentPortType">
+    <operation name="Ping">
+      <input message="tns:PingInput"/>
+      <output message="tns:PingOutput"/>
+    </operation>
+    <operation name="GetDocumentsSince">
+      <input message="tns:GetDocumentsSinceInput"/>
+      <output message="tns:GetDocumentsSinceOutput"/>
+    </operation>
+    <operation name="SubmitDocument">
+      <input message="tns:SubmitDocumentInput"/>
+      <output message="tns:SubmitDocumentOutput"/>
+    </operation>
+  </portType>
+
+  <binding name="PartnerDocumentBinding" type="tns:PartnerDocumentPortType">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <operation name="Ping">
+      <soap:operation soapAction="urn:resourcehub:partner-docs:v1#Ping"/>
+      <input><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+    </operation>
+    <operation name="GetDocumentsSince">
+      <soap:operation soapAction="urn:resourcehub:partner-docs:v1#GetDocumentsSince"/>
+      <input><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+    </operation>
+    <operation name="SubmitDocument">
+      <soap:operation soapAction="urn:resourcehub:partner-docs:v1#SubmitDocument"/>
+      <input><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+    </operation>
+  </binding>
+
+  <service name="PartnerDocumentService">
+    <port name="PartnerDocumentPort" binding="tns:PartnerDocumentBinding">
+      <soap:address location="http://localhost:8088/soap/partner-docs"/>
+    </port>
+  </service>
+</definitions>

@@ -1,0 +1,21 @@
+{
+  "data": [
+    {
+      "id": "art-2004",
+      "title": "Sales rep onboarding: week one",
+      "summary": "Systems, shadowing schedule and compliance training for new reps.",
+      "topic": "Training",
+      "url": "https://partner.example.com/articles/art-2004",
+      "updated_at": "2026-03-15T10:00:00Z"
+    },
+    {
+      "id": "art-2005",
+      "title": "Event sponsorship request process",
+      "summary": "Lead times, approval chain and the transparency reporting rules.",
+      "topic": "Compliance",
+      "url": "https://partner.example.com/articles/art-2005",
+      "updated_at": "2026-04-01T10:00:00Z"
+    }
+  ],
+  "next_cursor": null
+}
